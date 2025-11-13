@@ -37,6 +37,12 @@ export const initGA = () => {
 
 // Track page views (useful for single-page applications)
 export const trackPageView = (url: string) => {
+  // Verificar DNT antes de rastrear
+  const dnt = navigator.doNotTrack || (window as any).doNotTrack || (navigator as any).msDoNotTrack;
+  if (dnt === '1' || dnt === 'yes') {
+    return; // Não rastrear se DNT está ativado
+  }
+  
   if (typeof window === 'undefined' || !window.gtag) return;
   
   const measurementId = import.meta.env.VITE_GA_MEASUREMENT_ID;
@@ -54,6 +60,12 @@ export const trackEvent = (
   label?: string, 
   value?: number
 ) => {
+  // Verificar DNT antes de rastrear
+  const dnt = navigator.doNotTrack || (window as any).doNotTrack || (navigator as any).msDoNotTrack;
+  if (dnt === '1' || dnt === 'yes') {
+    return; // Não rastrear se DNT está ativado
+  }
+  
   if (typeof window === 'undefined' || !window.gtag) return;
   
   window.gtag('event', action, {
@@ -69,6 +81,12 @@ export const trackDemographics = (data: {
   gender?: string;
   interests?: string;
 }) => {
+  // Verificar DNT antes de rastrear
+  const dnt = navigator.doNotTrack || (window as any).doNotTrack || (navigator as any).msDoNotTrack;
+  if (dnt === '1' || dnt === 'yes') {
+    return; // Não rastrear se DNT está ativado
+  }
+  
   trackEvent('user_demographics', 'engagement', 'demographics_submitted');
   
   // Set user properties for better audience insights

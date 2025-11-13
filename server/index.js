@@ -102,11 +102,12 @@ app.use(cookieParser());
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 
-// Helper: Verificar DNT (deny-by-default)
+// Helper: Verificar DNT (bloquear apenas se explicitamente ativado)
 const isDNTEnabled = (req) => {
   const headerDNT = req.headers.dnt || req.headers['dnt'];
-  // Se header DNT não é explicitamente '0', assumir opt-out
-  return headerDNT !== '0';
+  // Bloquear APENAS se DNT está explicitamente ATIVADO ('1')
+  // Se DNT é '0', null, undefined ou ausente = PERMITIR tracking
+  return headerDNT === '1';
 };
 
 // Middleware para verificar autenticação de admin
@@ -377,16 +378,14 @@ app.post('/api/analytics/signals', async (req, res) => {
     const payloadDNT = deviceSignals.doNotTrack;
     const headerDNT = req.headers.dnt || req.headers['dnt'];
     
-    // Se DNT está ativado em QUALQUER fonte, ou se está ausente/indefinido (assumir opt-out), não processar
-    const isDNTEnabled = 
+    // Bloquear APENAS se DNT está explicitamente ATIVADO ('1' ou 'yes')
+    // Se DNT é '0', 'no', null, undefined ou ausente = PERMITIR tracking
+    const isDNTEnabledSignals = 
       payloadDNT === '1' || 
       payloadDNT === 'yes' || 
-      headerDNT === '1' ||
-      !payloadDNT || // Ausente/falso/null = tratar como opt-out por segurança
-      payloadDNT === 'null' ||
-      payloadDNT === 'undefined';
+      headerDNT === '1';
 
-    if (isDNTEnabled) {
+    if (isDNTEnabledSignals) {
       // Limpar dados existentes se houver
       try {
         db.prepare('DELETE FROM visitor_signals WHERE visitor_id = ?').run(visitorId);

@@ -44,7 +44,13 @@ function usePageTracking() {
   const location = useLocation();
 
   useEffect(() => {
-    trackPageView(location.pathname + location.search);
+    // Verificar DNT antes de rastrear no Google Analytics
+    const dnt = navigator.doNotTrack || (window as any).doNotTrack || (navigator as any).msDoNotTrack;
+    const isDNTEnabled = (dnt === '1' || dnt === 'yes');
+    
+    if (!isDNTEnabled) {
+      trackPageView(location.pathname + location.search);
+    }
   }, [location]);
 }
 
@@ -63,11 +69,26 @@ function RouterWithTracking() {
 
 function App() {
   useEffect(() => {
-    // Inicializar Vercel Analytics
-    inject();
+    // Verificar DNT antes de inicializar qualquer sistema de analytics
+    const dnt = navigator.doNotTrack || (window as any).doNotTrack || (navigator as any).msDoNotTrack;
+    const isDNTEnabled = (dnt === '1' || dnt === 'yes');
     
-    // Inicializar Google Analytics 4 (se configurado)
-    initGA();
+    // Inicializar sistema de analytics customizado (SEMPRE - ele já verifica DNT internamente)
+    analytics.init();
+    
+    // Inicializar Vercel Analytics APENAS se DNT não estiver ativado
+    if (!isDNTEnabled) {
+      inject();
+    } else {
+      console.log('🔒 Vercel Analytics desabilitado - Do Not Track está ativado');
+    }
+    
+    // Inicializar Google Analytics 4 APENAS se DNT não estiver ativado e se configurado
+    if (!isDNTEnabled) {
+      initGA();
+    } else {
+      console.log('🔒 Google Analytics desabilitado - Do Not Track está ativado');
+    }
   }, []);
 
   return (

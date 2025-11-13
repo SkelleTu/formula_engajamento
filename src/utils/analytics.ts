@@ -83,18 +83,19 @@ class AnalyticsTracker {
   async init() {
     if (this.isInitialized) return;
 
-    // DENY-BY-DEFAULT: Verificar DNT ANTES de fazer QUALQUER coisa
+    // Verificar DNT (Do Not Track) - apenas bloquear se EXPLICITAMENTE ativado
     const dnt = navigator.doNotTrack || (window as any).doNotTrack || (navigator as any).msDoNotTrack;
     
-    // Só permite tracking se DNT = '0' ou 'no' (explicitamente permitido)
-    if (dnt !== '0' && dnt !== 'no') {
-      console.log('🔒 Analytics desabilitado - Do Not Track ativado ou ausente (deny-by-default)');
+    // Bloquear APENAS se DNT está explicitamente ATIVADO ('1' ou 'yes')
+    // Se DNT é null, undefined, '0', 'no' ou ausente = PERMITIR tracking
+    if (dnt === '1' || dnt === 'yes') {
+      console.log('🔒 Analytics desabilitado - Do Not Track está ativado');
       this.isInitialized = true; // Marca como inicializado para não tentar novamente
       this.isTrackingAllowed = false; // Bloqueia todos os métodos de tracking
       return; // NÃO coleta NADA
     }
 
-    console.log('✅ Analytics habilitado - Do Not Track explicitamente desabilitado');
+    console.log('✅ Analytics habilitado - Do Not Track não está ativado');
     this.isTrackingAllowed = true; // Permite tracking
 
     const visitorData: VisitorData = {
@@ -246,10 +247,15 @@ class AnalyticsTracker {
 
   private async sendData(endpoint: string, data: any) {
     try {
+      // Obter valor atual de DNT para enviar no cabeçalho
+      const dnt = navigator.doNotTrack || (window as any).doNotTrack || (navigator as any).msDoNotTrack;
+      const dntValue = (dnt === '1' || dnt === 'yes') ? '1' : '0';
+      
       await fetch(this.apiUrl + endpoint, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'DNT': dntValue
         },
         body: JSON.stringify(data)
       });
