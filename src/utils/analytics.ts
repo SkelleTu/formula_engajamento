@@ -1,4 +1,5 @@
 // Sistema de Analytics e Rastreamento
+import { collectDeviceSignals, collectBehavioralSignals } from './fingerprint';
 
 export interface VisitorData {
   ip?: string;
@@ -99,8 +100,36 @@ class AnalyticsTracker {
 
     await this.sendData('/visitor', { visitorId: this.visitorId, userData: visitorData });
 
+    // Coletar e enviar sinais de fingerprinting + comportamentais para inferência demográfica
+    await this.collectAndSendSignals();
+
     this.setupEventListeners();
     this.isInitialized = true;
+  }
+
+  private async collectAndSendSignals() {
+    try {
+      // Deny-by-default: APENAS coletar se explicitamente permitido
+      const dnt = navigator.doNotTrack || (window as any).doNotTrack || (navigator as any).msDoNotTrack;
+      
+      // Se DNT é '1', 'yes', null, undefined, ou qualquer valor não-zero → NÃO coletar
+      // Só coleta se DNT = '0' ou 'no' (explicitamente permitido)
+      if (dnt !== '0' && dnt !== 'no') {
+        console.log('Coleta de sinais demográficos desabilitada (Do Not Track ou ausente)');
+        return;
+      }
+
+      const deviceSignals = await collectDeviceSignals();
+      const behavioralSignals = collectBehavioralSignals();
+
+      await this.sendData('/signals', {
+        visitorId: this.visitorId,
+        deviceSignals,
+        behavioralSignals
+      });
+    } catch (error) {
+      console.error('Erro ao coletar sinais:', error);
+    }
   }
 
   private async getLocationData() {

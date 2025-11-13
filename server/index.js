@@ -196,6 +196,33 @@ app.post('/api/admin/logout', (req, res) => {
   res.json({ success: true });
 });
 
+// Endpoint público para exclusão de dados (LGPD - Art. 18, IV)
+app.post('/api/analytics/delete-my-data', async (req, res) => {
+  try {
+    const { visitorId } = req.body;
+
+    if (!visitorId || !visitorId.startsWith('visitor_')) {
+      return res.status(400).json({ error: 'Visitor ID inválido' });
+    }
+
+    // Deletar todos os dados associados ao visitante
+    db.prepare('DELETE FROM visitor_signals WHERE visitor_id = ?').run(visitorId);
+    db.prepare('DELETE FROM inferred_demographics WHERE visitor_id = ?').run(visitorId);
+    db.prepare('DELETE FROM page_views WHERE visitor_id = ?').run(visitorId);
+    db.prepare('DELETE FROM events WHERE visitor_id = ?').run(visitorId);
+    db.prepare('DELETE FROM registrations WHERE visitor_id = ?').run(visitorId);
+    db.prepare('DELETE FROM visitors WHERE visitor_id = ?').run(visitorId);
+
+    res.json({ 
+      success: true, 
+      message: 'Todos os seus dados foram removidos permanentemente do nosso sistema'
+    });
+  } catch (error) {
+    console.error('Erro ao deletar dados do usuário:', error);
+    res.status(500).json({ error: 'Erro no servidor' });
+  }
+});
+
 // Trocar senha (protegido - requer autenticação)
 app.post('/api/admin/change-password', authMiddleware, async (req, res) => {
   try {
@@ -308,6 +335,206 @@ app.post('/api/analytics/pageview', async (req, res) => {
     res.status(500).json({ error: 'Erro no servidor' });
   }
 });
+
+// Coletar sinais do visitante (device fingerprint + behavioral)
+app.post('/api/analytics/signals', async (req, res) => {
+  try {
+    const { visitorId, deviceSignals, behavioralSignals } = req.body;
+
+    // Validar dados recebidos
+    if (!visitorId || !deviceSignals || !behavioralSignals) {
+      return res.status(400).json({ error: 'Dados inválidos' });
+    }
+
+    // Validar que o visitorId corresponde ao padrão esperado
+    if (!visitorId.startsWith('visitor_')) {
+      return res.status(400).json({ error: 'Visitor ID inválido' });
+    }
+
+    // Respeitar Do Not Track - verificar múltiplas fontes (payload + headers HTTP)
+    const payloadDNT = deviceSignals.doNotTrack;
+    const headerDNT = req.headers.dnt || req.headers['dnt'];
+    
+    // Se DNT está ativado em QUALQUER fonte, ou se está ausente/indefinido (assumir opt-out), não processar
+    const isDNTEnabled = 
+      payloadDNT === '1' || 
+      payloadDNT === 'yes' || 
+      headerDNT === '1' ||
+      !payloadDNT || // Ausente/falso/null = tratar como opt-out por segurança
+      payloadDNT === 'null' ||
+      payloadDNT === 'undefined';
+
+    if (isDNTEnabled) {
+      // Limpar dados existentes se houver
+      try {
+        db.prepare('DELETE FROM visitor_signals WHERE visitor_id = ?').run(visitorId);
+        db.prepare('DELETE FROM inferred_demographics WHERE visitor_id = ?').run(visitorId);
+        db.prepare('UPDATE visitors SET age_range = NULL, gender = NULL, interests = NULL, occupation = NULL, education_level = NULL WHERE visitor_id = ?').run(visitorId);
+      } catch (cleanupError) {
+        console.error('Erro ao limpar dados após DNT:', cleanupError);
+      }
+      
+      return res.json({ 
+        success: true, 
+        message: 'Do Not Track respeitado - dados não salvos e registros anteriores removidos',
+        inference: null 
+      });
+    }
+
+    // Salvar sinais brutos
+    db.prepare(
+      `INSERT INTO visitor_signals (
+        visitor_id, fingerprint_id, timezone, language, languages,
+        screen_resolution, color_depth, hardware_concurrency, device_memory,
+        platform, touch_support, cookie_enabled, do_not_track,
+        hour_of_day, day_of_week, is_weekday, is_business_hours,
+        referrer, landing_page
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    ).run(
+      visitorId,
+      deviceSignals.fingerprintId,
+      deviceSignals.timezone,
+      deviceSignals.language,
+      JSON.stringify(deviceSignals.languages),
+      deviceSignals.screenResolution,
+      deviceSignals.colorDepth,
+      deviceSignals.hardwareConcurrency,
+      deviceSignals.deviceMemory || null,
+      deviceSignals.platform,
+      deviceSignals.touchSupport ? 1 : 0,
+      deviceSignals.cookieEnabled ? 1 : 0,
+      deviceSignals.doNotTrack,
+      behavioralSignals.hourOfDay,
+      behavioralSignals.dayOfWeek,
+      behavioralSignals.isWeekday ? 1 : 0,
+      behavioralSignals.isBusinessHours ? 1 : 0,
+      behavioralSignals.referrer,
+      behavioralSignals.landingPage
+    );
+
+    // Executar motor de inferência
+    const inference = inferDemographics(deviceSignals, behavioralSignals, visitorId);
+
+    // Salvar inferências se confiança > threshold
+    if (inference.confidence > 0.3) {
+      db.prepare(
+        `INSERT INTO inferred_demographics (
+          visitor_id, age_range, gender, occupation, education_level, interests,
+          confidence_score, algorithm_version
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+      ).run(
+        visitorId,
+        inference.ageRange,
+        inference.gender,
+        inference.occupation,
+        inference.educationLevel,
+        inference.interests,
+        inference.confidence,
+        'heuristic_v1.0'
+      );
+
+      // Atualizar tabela de visitantes com a melhor inferência
+      db.prepare(
+        `UPDATE visitors SET 
+          age_range = ?,
+          gender = ?,
+          interests = ?,
+          occupation = ?,
+          education_level = ?
+        WHERE visitor_id = ?`
+      ).run(
+        inference.ageRange,
+        inference.gender,
+        inference.interests,
+        inference.occupation,
+        inference.educationLevel,
+        visitorId
+      );
+    }
+
+    res.json({ success: true, inference });
+  } catch (error) {
+    console.error('Erro ao processar sinais:', error);
+    res.status(500).json({ error: 'Erro no servidor' });
+  }
+});
+
+// Motor de inferência demográfica (heurístico)
+function inferDemographics(deviceSignals, behavioralSignals, visitorId) {
+  let ageScore = 0;
+  let genderScore = 0; // -1 = female, +1 = male, 0 = neutral
+  let occupationHints = [];
+  let educationHints = [];
+  let interestHints = [];
+  let confidence = 0.5;
+
+  // === INFERÊNCIA DE IDADE ===
+  // Horário de acesso
+  if (behavioralSignals.hourOfDay >= 0 && behavioralSignals.hourOfDay < 6) {
+    ageScore -= 2; // Mais jovem
+  } else if (behavioralSignals.hourOfDay >= 22) {
+    ageScore -= 1; // Jovem
+  } else if (behavioralSignals.hourOfDay >= 6 && behavioralSignals.hourOfDay < 9) {
+    ageScore += 1; // Adulto trabalhador
+  }
+
+  // Hardware specs (dispositivo high-end = poder aquisitivo)
+  if (deviceSignals.hardwareConcurrency >= 8 || (deviceSignals.deviceMemory && deviceSignals.deviceMemory >= 8)) {
+    ageScore += 1; // Adulto com renda
+    educationHints.push('graduate');
+    occupationHints.push('professional');
+  }
+
+  // Mobile vs Desktop
+  const isMobile = deviceSignals.touchSupport && parseInt(deviceSignals.screenResolution.split('x')[0]) < 800;
+  if (isMobile) {
+    ageScore -= 0.5; // Mais jovem
+  }
+
+  // === INFERÊNCIA DE OCUPAÇÃO ===
+  // Acesso em horário comercial + dia de semana
+  if (behavioralSignals.isWeekday && behavioralSignals.isBusinessHours) {
+    occupationHints.push('employee');
+    educationHints.push('undergraduate');
+  }
+
+  // Desktop durante horário comercial = profissional
+  if (!isMobile && behavioralSignals.isBusinessHours && behavioralSignals.isWeekday) {
+    occupationHints.push('professional');
+    educationHints.push('graduate');
+    confidence += 0.1;
+  }
+
+  // === INFERÊNCIA DE INTERESSES ===
+  // Navegação de engajamento/marketing (baseado na landing page)
+  if (behavioralSignals.landingPage === '/') {
+    interestHints.push('marketing', 'entrepreneurship', 'social-media');
+  }
+
+  // === CONVERSÃO DE SCORES EM CATEGORIAS ===
+  let ageRange;
+  if (ageScore < -2) ageRange = '18-24';
+  else if (ageScore < 0) ageRange = '25-34';
+  else if (ageScore < 2) ageRange = '35-44';
+  else if (ageScore < 4) ageRange = '45-54';
+  else ageRange = '55+';
+
+  const occupation = occupationHints[0] || null;
+  const educationLevel = educationHints[0] || null;
+  const interests = interestHints.length > 0 ? interestHints.join(',') : null;
+
+  // Gênero: não inferimos sem dados explícitos (privacidade)
+  const gender = null;
+
+  return {
+    ageRange,
+    gender,
+    occupation,
+    educationLevel,
+    interests,
+    confidence: Math.min(confidence, 0.7) // Cap at 70% for heuristics
+  };
+}
 
 // Registrar dados de cadastro
 app.post('/api/analytics/registration', async (req, res) => {
