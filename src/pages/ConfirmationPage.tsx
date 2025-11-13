@@ -1,6 +1,7 @@
 import { CheckCircle, ShoppingCart, MessageCircle, Sparkles } from 'lucide-react';
 import Logo from '../components/Logo';
 import FloatingIcons from '../components/FloatingIcons';
+import BackButton from '../components/BackButton';
 
 interface ConfirmationPageProps {
   userData: {
@@ -9,9 +10,10 @@ interface ConfirmationPageProps {
     email: string;
   };
   onNavigateToHome: () => void;
+  onBack?: () => void;
 }
 
-function ConfirmationPage({ userData, onNavigateToHome }: ConfirmationPageProps) {
+function ConfirmationPage({ userData, onNavigateToHome, onBack }: ConfirmationPageProps) {
   const firstName = userData.name.split(' ')[0];
 
   return (
@@ -21,8 +23,10 @@ function ConfirmationPage({ userData, onNavigateToHome }: ConfirmationPageProps)
       <FloatingIcons />
 
       <div className="relative w-full max-w-2xl">
-        <div className="py-8">
+        <div className="py-8 flex items-center justify-between">
+          {onBack && <BackButton onClick={onBack} />}
           <Logo onClick={onNavigateToHome} />
+          <div className="w-24"></div>
         </div>
 
         <div className="bg-gray-900/80 backdrop-blur-sm border-2 border-pink-500/30 rounded-2xl p-8 md:p-12 shadow-2xl shadow-pink-500/20">

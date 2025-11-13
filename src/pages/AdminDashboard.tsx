@@ -58,12 +58,29 @@ interface VideoConfig {
   updated_at: string;
 }
 
+interface DemographicsData {
+  ageDistribution: Array<{ age: string; count: number }>;
+  genderDistribution: Array<{ gender: string; count: number }>;
+  occupationDistribution: Array<{ occupation: string; count: number }>;
+  educationDistribution: Array<{ education: string; count: number }>;
+  topInterests: Array<{ interest: string; count: number }>;
+  averageConfidence: {
+    age_range: number;
+    gender: number;
+    occupation: number;
+    education_level: number;
+    interests: number;
+  };
+  totalProfiles: number;
+}
+
 function AdminDashboard() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [visitors, setVisitors] = useState<Visitor[]>([]);
   const [registrations, setRegistrations] = useState<Registration[]>([]);
+  const [demographics, setDemographics] = useState<DemographicsData | null>(null);
   const [selectedVisitor, setSelectedVisitor] = useState<any>(null);
-  const [activeTab, setActiveTab] = useState<'overview' | 'visitors' | 'registrations' | 'video'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'visitors' | 'registrations' | 'demographics' | 'video'>('overview');
   const [initialLoading, setInitialLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
@@ -112,14 +129,15 @@ function AdminDashboard() {
     }
     
     try {
-      const [statsRes, visitorsRes, registrationsRes] = await Promise.all([
+      const [statsRes, visitorsRes, registrationsRes, demographicsRes] = await Promise.all([
         fetch('/api/admin/stats', { credentials: 'include' }),
         fetch('/api/admin/visitors?limit=100', { credentials: 'include' }),
-        fetch('/api/admin/registrations?limit=100', { credentials: 'include' })
+        fetch('/api/admin/registrations?limit=100', { credentials: 'include' }),
+        fetch('/api/admin/demographics', { credentials: 'include' })
       ]);
 
-      if (!statsRes.ok || !visitorsRes.ok || !registrationsRes.ok) {
-        if (statsRes.status === 401 || visitorsRes.status === 401 || registrationsRes.status === 401) {
+      if (!statsRes.ok || !visitorsRes.ok || !registrationsRes.ok || !demographicsRes.ok) {
+        if (statsRes.status === 401 || visitorsRes.status === 401 || registrationsRes.status === 401 || demographicsRes.status === 401) {
           navigate('/admin');
           return;
         }
@@ -129,10 +147,12 @@ function AdminDashboard() {
       const statsData = await statsRes.json();
       const visitorsData = await visitorsRes.json();
       const registrationsData = await registrationsRes.json();
+      const demographicsData = await demographicsRes.json();
 
       setStats(statsData);
       setVisitors(visitorsData.visitors);
       setRegistrations(registrationsData.registrations);
+      setDemographics(demographicsData);
       setLastUpdate(new Date());
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
@@ -798,6 +818,7 @@ function AdminDashboard() {
             { id: 'overview', label: 'Visão Geral', icon: Activity },
             { id: 'visitors', label: 'Visitantes', icon: Users },
             { id: 'registrations', label: 'Cadastros', icon: FileText },
+            { id: 'demographics', label: 'Demografia', icon: User },
             { id: 'video', label: 'Vídeo', icon: Video }
           ].map((tab) => {
             const Icon = tab.icon;
@@ -962,6 +983,164 @@ function AdminDashboard() {
                 </ul>
               </div>
             </div>
+          </div>
+        )}
+
+        {activeTab === 'demographics' && (
+          <div className="space-y-6">
+            {demographics && demographics.totalProfiles > 0 ? (
+              <>
+                {/* Header com estatísticas */}
+                <div className="bg-gray-900/50 backdrop-blur-sm border border-pink-500/20 rounded-2xl p-6 shadow-2xl">
+                  <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-3">
+                    <User className="w-7 h-7 text-pink-400" />
+                    Análise Demográfica Passiva
+                  </h2>
+                  <p className="text-purple-300 mb-6">
+                    Dados coletados automaticamente através de análise comportamental, fingerprinting e geo-IP. Total de {demographics.totalProfiles} perfis analisados.
+                  </p>
+                  
+                  {/* Cards de confiança */}
+                  <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                    {[
+                      { label: 'Faixa Etária', value: demographics.averageConfidence.age_range, key: 'age_range' },
+                      { label: 'Gênero', value: demographics.averageConfidence.gender, key: 'gender' },
+                      { label: 'Ocupação', value: demographics.averageConfidence.occupation, key: 'occupation' },
+                      { label: 'Educação', value: demographics.averageConfidence.education_level, key: 'education' },
+                      { label: 'Interesses', value: demographics.averageConfidence.interests, key: 'interests' }
+                    ].map(item => {
+                      const percentage = Math.round(item.value * 100);
+                      const level = percentage >= 70 ? 'Alta' : percentage >= 40 ? 'Média' : 'Baixa';
+                      const color = percentage >= 70 ? 'text-green-400' : percentage >= 40 ? 'text-yellow-400' : 'text-orange-400';
+                      
+                      return (
+                        <div key={item.key} className="bg-gradient-to-br from-purple-500/10 to-pink-500/10 rounded-xl p-4 border border-purple-500/20">
+                          <p className="text-purple-300 text-xs mb-1">{item.label}</p>
+                          <p className={`text-2xl font-bold ${color}`}>{percentage}%</p>
+                          <p className="text-purple-400 text-xs mt-1">Confiança: {level}</p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Gráficos de Faixa Etária e Gênero */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <AnalyticsCard 
+                    title="Distribuição de Faixa Etária" 
+                    subtitle={`${demographics.ageDistribution.reduce((sum, item) => sum + item.count, 0)} visitantes analisados`}
+                    icon={<Users className="w-5 h-5" />}
+                    accentColor="purple"
+                  >
+                    <EChartPie3D
+                      data={demographics.ageDistribution.map(item => ({
+                        name: item.age,
+                        value: item.count
+                      }))}
+                      title=""
+                      chartId="age-distribution"
+                    />
+                  </AnalyticsCard>
+
+                  <AnalyticsCard 
+                    title="Distribuição de Gênero" 
+                    subtitle={`${demographics.genderDistribution.reduce((sum, item) => sum + item.count, 0)} visitantes analisados`}
+                    icon={<Users className="w-5 h-5" />}
+                    accentColor="pink"
+                  >
+                    <EChartPie3D
+                      data={demographics.genderDistribution.map(item => ({
+                        name: item.gender === 'M' ? 'Masculino' : item.gender === 'F' ? 'Feminino' : item.gender,
+                        value: item.count
+                      }))}
+                      title=""
+                      chartId="gender-distribution"
+                    />
+                  </AnalyticsCard>
+                </div>
+
+                {/* Gráficos de Ocupação e Educação */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <AnalyticsCard 
+                    title="Distribuição de Ocupação" 
+                    subtitle={`Top ${demographics.occupationDistribution.length} ocupações identificadas`}
+                    icon={<Activity className="w-5 h-5" />}
+                    accentColor="blue"
+                  >
+                    <EChartBar3D
+                      data={demographics.occupationDistribution.slice(0, 8).map(item => ({
+                        name: item.occupation,
+                        value: item.count
+                      }))}
+                      title=""
+                      chartId="occupation-distribution"
+                    />
+                  </AnalyticsCard>
+
+                  <AnalyticsCard 
+                    title="Nível de Educação" 
+                    subtitle={`${demographics.educationDistribution.reduce((sum, item) => sum + item.count, 0)} visitantes analisados`}
+                    icon={<Activity className="w-5 h-5" />}
+                    accentColor="green"
+                  >
+                    <EChartBar3D
+                      data={demographics.educationDistribution.map(item => ({
+                        name: item.education,
+                        value: item.count
+                      }))}
+                      title=""
+                      chartId="education-distribution"
+                    />
+                  </AnalyticsCard>
+                </div>
+
+                {/* Top Interesses */}
+                {demographics.topInterests.length > 0 && (
+                  <div className="bg-gray-900/50 backdrop-blur-sm border border-pink-500/20 rounded-2xl p-6 shadow-2xl">
+                    <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                      <Sparkles className="w-6 h-6 text-pink-400" />
+                      Top 10 Interesses Identificados
+                    </h3>
+                    <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                      {demographics.topInterests.map((item, index) => (
+                        <div 
+                          key={index}
+                          className="bg-gradient-to-br from-pink-500/10 to-purple-500/10 rounded-xl p-4 border border-pink-500/20 text-center"
+                        >
+                          <p className="text-white font-semibold mb-1">{item.interest}</p>
+                          <p className="text-pink-400 text-2xl font-bold">{item.count}</p>
+                          <p className="text-purple-300 text-xs mt-1">visitantes</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Nota sobre privacidade */}
+                <div className="bg-gradient-to-br from-yellow-500/10 to-orange-500/10 rounded-xl p-6 border border-yellow-500/20">
+                  <h3 className="text-lg font-semibold text-yellow-300 mb-3 flex items-center gap-2">
+                    🔒 Privacidade e LGPD
+                  </h3>
+                  <ul className="space-y-2 text-purple-300 text-sm">
+                    <li>• Todos os dados são coletados de forma passiva e anônima</li>
+                    <li>• Sistema respeita automaticamente o Do Not Track (DNT) do navegador</li>
+                    <li>• Nenhum dado pessoal identificável é armazenado sem consentimento</li>
+                    <li>• Inferências são baseadas em padrões comportamentais e sinais técnicos</li>
+                    <li>• Scores de confiança indicam a precisão das análises automáticas</li>
+                  </ul>
+                </div>
+              </>
+            ) : (
+              <div className="bg-gray-900/50 backdrop-blur-sm border border-pink-500/20 rounded-2xl p-12 shadow-2xl text-center">
+                <div className="inline-block p-6 bg-gradient-to-br from-purple-500/20 to-pink-500/20 rounded-full mb-6">
+                  <User className="w-16 h-16 text-purple-400" />
+                </div>
+                <h3 className="text-2xl font-bold text-white mb-4">Nenhum Dado Demográfico Disponível</h3>
+                <p className="text-purple-300 max-w-md mx-auto">
+                  Aguardando visitantes para coletar dados demográficos automaticamente através de análise comportamental e fingerprinting.
+                </p>
+              </div>
+            )}
           </div>
         )}
 

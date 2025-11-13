@@ -1,6 +1,7 @@
 import { useState, FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import FloatingIcons from '../components/FloatingIcons';
+import BackButton from '../components/BackButton';
 
 export default function AdminLoginPage() {
   const [username, setUsername] = useState('');
@@ -99,6 +100,8 @@ export default function AdminLoginPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-purple-800 to-indigo-900 flex items-center justify-center p-4">
       <FloatingIcons />
+      
+      <BackButton onClick={() => navigate('/')} className="absolute top-6 left-6 z-20" />
       
       <div className="relative bg-white/10 backdrop-blur-lg rounded-2xl p-8 w-full max-w-md border border-white/20 shadow-2xl z-10">
         <div className="text-center mb-8">

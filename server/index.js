@@ -678,6 +678,158 @@ app.get('/api/admin/events', authMiddleware, async (req, res) => {
   }
 });
 
+// Dashboard: Obter dados demográficos agregados
+app.get('/api/admin/demographics', authMiddleware, async (req, res) => {
+  try {
+    // Buscar todos os visitantes com dados demográficos
+    const visitors = db.prepare('SELECT inferred_demographics FROM visitors WHERE inferred_demographics IS NOT NULL').all();
+    
+    if (!visitors || visitors.length === 0) {
+      return res.json({
+        ageDistribution: [],
+        genderDistribution: [],
+        occupationDistribution: [],
+        educationDistribution: [],
+        topInterests: [],
+        averageConfidence: {
+          age_range: 0,
+          gender: 0,
+          occupation: 0,
+          education_level: 0,
+          interests: 0
+        },
+        totalProfiles: 0
+      });
+    }
+
+    // Contadores para agregação
+    const ageCount = {};
+    const genderCount = {};
+    const occupationCount = {};
+    const educationCount = {};
+    const interestsCount = {};
+    
+    let totalConfidence = {
+      age_range: 0,
+      gender: 0,
+      occupation: 0,
+      education_level: 0,
+      interests: 0
+    };
+    let confidenceCounts = {
+      age_range: 0,
+      gender: 0,
+      occupation: 0,
+      education_level: 0,
+      interests: 0
+    };
+
+    // Processar cada visitante
+    visitors.forEach(v => {
+      try {
+        const demographics = typeof v.inferred_demographics === 'string' 
+          ? JSON.parse(v.inferred_demographics) 
+          : v.inferred_demographics;
+
+        if (!demographics) return;
+
+        // Idade
+        if (demographics.age_range?.value) {
+          ageCount[demographics.age_range.value] = (ageCount[demographics.age_range.value] || 0) + 1;
+          if (demographics.age_range.confidence) {
+            totalConfidence.age_range += demographics.age_range.confidence;
+            confidenceCounts.age_range++;
+          }
+        }
+
+        // Gênero
+        if (demographics.gender?.value) {
+          genderCount[demographics.gender.value] = (genderCount[demographics.gender.value] || 0) + 1;
+          if (demographics.gender.confidence) {
+            totalConfidence.gender += demographics.gender.confidence;
+            confidenceCounts.gender++;
+          }
+        }
+
+        // Ocupação
+        if (demographics.occupation?.value) {
+          occupationCount[demographics.occupation.value] = (occupationCount[demographics.occupation.value] || 0) + 1;
+          if (demographics.occupation.confidence) {
+            totalConfidence.occupation += demographics.occupation.confidence;
+            confidenceCounts.occupation++;
+          }
+        }
+
+        // Educação
+        if (demographics.education_level?.value) {
+          educationCount[demographics.education_level.value] = (educationCount[demographics.education_level.value] || 0) + 1;
+          if (demographics.education_level.confidence) {
+            totalConfidence.education_level += demographics.education_level.confidence;
+            confidenceCounts.education_level++;
+          }
+        }
+
+        // Interesses
+        if (demographics.interests?.value && Array.isArray(demographics.interests.value)) {
+          demographics.interests.value.forEach(interest => {
+            interestsCount[interest] = (interestsCount[interest] || 0) + 1;
+          });
+          if (demographics.interests.confidence) {
+            totalConfidence.interests += demographics.interests.confidence;
+            confidenceCounts.interests++;
+          }
+        }
+      } catch (parseError) {
+        console.error('Erro ao processar demografia:', parseError);
+      }
+    });
+
+    // Converter para arrays ordenados
+    const ageDistribution = Object.entries(ageCount)
+      .map(([age, count]) => ({ age, count }))
+      .sort((a, b) => b.count - a.count);
+
+    const genderDistribution = Object.entries(genderCount)
+      .map(([gender, count]) => ({ gender, count }))
+      .sort((a, b) => b.count - a.count);
+
+    const occupationDistribution = Object.entries(occupationCount)
+      .map(([occupation, count]) => ({ occupation, count }))
+      .sort((a, b) => b.count - a.count);
+
+    const educationDistribution = Object.entries(educationCount)
+      .map(([education, count]) => ({ education, count }))
+      .sort((a, b) => b.count - a.count);
+
+    const topInterests = Object.entries(interestsCount)
+      .map(([interest, count]) => ({ interest, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10);
+
+    // Calcular médias de confiança
+    const averageConfidence = {
+      age_range: confidenceCounts.age_range > 0 ? (totalConfidence.age_range / confidenceCounts.age_range) : 0,
+      gender: confidenceCounts.gender > 0 ? (totalConfidence.gender / confidenceCounts.gender) : 0,
+      occupation: confidenceCounts.occupation > 0 ? (totalConfidence.occupation / confidenceCounts.occupation) : 0,
+      education_level: confidenceCounts.education_level > 0 ? (totalConfidence.education_level / confidenceCounts.education_level) : 0,
+      interests: confidenceCounts.interests > 0 ? (totalConfidence.interests / confidenceCounts.interests) : 0
+    };
+
+    res.json({
+      ageDistribution,
+      genderDistribution,
+      occupationDistribution,
+      educationDistribution,
+      topInterests,
+      averageConfidence,
+      totalProfiles: visitors.length
+    });
+  } catch (error) {
+    console.error('Erro ao buscar dados demográficos:', error);
+    res.status(500).json({ error: 'Erro no servidor' });
+  }
+});
+
 // Dashboard: Listar registros
 app.get('/api/admin/registrations', authMiddleware, async (req, res) => {
   try {
