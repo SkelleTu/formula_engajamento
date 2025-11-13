@@ -6,6 +6,7 @@ import ConfirmationPage from './pages/ConfirmationPage';
 import AdminLoginPage from './pages/AdminLoginPage';
 import AdminDashboard from './pages/AdminDashboard';
 import { analytics } from './utils/analytics';
+import { inject } from '@vercel/analytics';
 
 function MainApp() {
   const [currentPage, setCurrentPage] = useState<'landing' | 'registration' | 'confirmation'>('landing');
@@ -38,6 +39,10 @@ function MainApp() {
 }
 
 function App() {
+  useEffect(() => {
+    inject();
+  }, []);
+
   return (
     <BrowserRouter>
       <Routes>
