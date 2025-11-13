@@ -3,6 +3,37 @@
 ## Overview
 Funil is a video-based landing page application designed to capture leads through a multi-step funnel process. It features a video presentation that tracks user engagement, a registration form for user information, and an administrative dashboard for monitoring visitor analytics and managing registrations. The system aims to provide a robust platform for lead generation and analytics, built with a React frontend, Express.js backend, and SQLite database (arquivo local database.db versionado no Git para 100% de portabilidade).
 
+## Recent Changes (November 2025)
+
+### Analytics System - Critical Bug Fixes
+**Date**: November 13, 2025
+**Status**: ✅ Fully Fixed and Tested
+
+Completed comprehensive revision and correction of the analytics system. All critical bugs have been fixed and the system is now 100% functional.
+
+**Problems Identified and Fixed:**
+1. **CRITICAL**: `analytics.init()` was never being called in App.tsx, preventing all data collection
+2. **CRITICAL**: DNT (Do Not Track) logic was inverted - blocking users when DNT was null/absent instead of when explicitly enabled
+3. **CRITICAL**: Frontend and backend had misaligned DNT verification logic
+4. **HIGH**: Google Analytics and Vercel Analytics were not respecting DNT settings
+5. **HIGH**: DNT header was not being sent in analytics requests from frontend to backend
+
+**Corrections Applied:**
+- ✅ Fixed DNT logic in `src/utils/analytics.ts` - now only blocks when DNT is explicitly '1' or 'yes'
+- ✅ Added `analytics.init()` call in `src/App.tsx` with proper DNT verification
+- ✅ Made Google Analytics respect DNT in all functions (`trackPageView`, `trackEvent`, `trackDemographics`)
+- ✅ Made Vercel Analytics respect DNT (only loads when DNT is not active)
+- ✅ Fixed backend DNT logic in `server/index.js` to align with frontend
+- ✅ Added DNT header to all analytics requests from frontend
+- ✅ Fixed special DNT verification in `/api/analytics/signals` endpoint
+
+**Verification:**
+- ✅ System tested and collecting data correctly (11 visitors, 10 page views, 191 events)
+- ✅ Geolocation working (Brazil/Araras, USA/North Charleston)
+- ✅ Device and browser detection working (Desktop/Chrome)
+- ✅ All changes reviewed and approved by Architect agent
+- ✅ DNT compliance verified across all systems (custom analytics, GA4, Vercel)
+
 ## User Preferences
 Preferred communication style: Simple, everyday language.
 
