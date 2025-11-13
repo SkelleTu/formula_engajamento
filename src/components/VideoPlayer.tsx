@@ -13,17 +13,11 @@ interface VideoConfig {
 
 function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
   const [videoConfig, setVideoConfig] = useState<VideoConfig | null>(null);
-  const [progress, setProgress] = useState(0);
   const [buttonEnabled, setButtonEnabled] = useState(false);
   const [videoEnded, setVideoEnded] = useState(false);
   const videoContainerRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<any>(null);
   const progressIntervalRef = useRef<any>(null);
-  
-  // Função de easing: barra começa rápida e desacelera progressivamente
-  const easeOutCubic = (t: number): number => {
-    return 1 - Math.pow(1 - t, 3);
-  };
 
   useEffect(() => {
     loadVideoConfig();
@@ -55,12 +49,6 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
     const regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
     const match = url.match(regExp);
     return (match && match[7].length === 11) ? match[7] : null;
-  };
-
-  const getVimeoVideoId = (url: string): string | null => {
-    const regExp = /vimeo\.com\/(\d+)/;
-    const match = url.match(regExp);
-    return match ? match[1] : null;
   };
 
 
@@ -122,7 +110,6 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
           // Detecta quando o vídeo terminou
           if (event.data === window.YT.PlayerState.ENDED) {
             setVideoEnded(true);
-            setProgress(100);
             if (progressIntervalRef.current) {
               clearInterval(progressIntervalRef.current);
             }
@@ -136,42 +123,6 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
     });
   };
 
-  const loadVimeoPlayer = (videoId: string) => {
-    const iframe = document.createElement('iframe');
-    iframe.src = `https://player.vimeo.com/video/${videoId}?autoplay=1&controls=0&loop=0`;
-    iframe.width = '100%';
-    iframe.height = '100%';
-    iframe.allow = 'autoplay; fullscreen';
-    iframe.style.position = 'absolute';
-    iframe.style.top = '0';
-    iframe.style.left = '0';
-    iframe.style.width = '100%';
-    iframe.style.height = '100%';
-    
-    const container = document.getElementById('video-player-container');
-    if (container) {
-      container.innerHTML = '';
-      container.appendChild(iframe);
-    }
-  };
-
-  const loadDirectVideo = (url: string) => {
-    const video = document.createElement('video');
-    video.src = url;
-    video.autoplay = true;
-    video.style.width = '100%';
-    video.style.height = '100%';
-    video.style.objectFit = 'contain';
-    video.controls = false;
-    
-    const container = document.getElementById('video-player-container');
-    if (container) {
-      container.innerHTML = '';
-      container.appendChild(video);
-      video.play();
-    }
-  };
-
   const trackVideoProgress = () => {
     if (progressIntervalRef.current) {
       clearInterval(progressIntervalRef.current);
@@ -180,23 +131,10 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
     progressIntervalRef.current = setInterval(() => {
       if (playerRef.current && playerRef.current.getCurrentTime) {
         const currentTime = playerRef.current.getCurrentTime();
-        const duration = playerRef.current.getDuration();
-        
-        if (duration > 0) {
-          // Progresso linear real (0 a 1)
-          const linearProgress = currentTime / duration;
-          
-          // Aplica easing: barra começa rápida e desacelera progressivamente
-          const easedProgress = easeOutCubic(linearProgress);
-          
-          // Converte para porcentagem
-          const progressPercent = easedProgress * 100;
-          setProgress(Math.min(progressPercent, 100));
 
-          if (videoConfig && currentTime >= videoConfig.button_delay_seconds && !buttonEnabled) {
-            setButtonEnabled(true);
-            onButtonEnable();
-          }
+        if (videoConfig && currentTime >= videoConfig.button_delay_seconds && !buttonEnabled) {
+          setButtonEnabled(true);
+          onButtonEnable();
         }
       }
     }, 500);
@@ -246,7 +184,6 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
                     playerRef.current.seekTo(0);
                     playerRef.current.playVideo();
                     setVideoEnded(false);
-                    setProgress(0);
                   }
                 }}
                 className="px-8 py-4 bg-gradient-to-r from-pink-500 to-purple-500 text-white font-bold rounded-full shadow-2xl hover:scale-105 transition-transform duration-300"
@@ -256,13 +193,6 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
             </div>
           )}
           
-          {/* Barra de progresso */}
-          <div className="absolute bottom-0 left-0 right-0 h-2 bg-gray-800/80 z-20">
-            <div 
-              className="h-full bg-gradient-to-r from-pink-500 to-purple-500 transition-all duration-300 ease-out"
-              style={{ width: `${progress}%` }}
-            ></div>
-          </div>
         </div>
       </div>
     </div>

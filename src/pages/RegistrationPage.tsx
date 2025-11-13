@@ -2,14 +2,16 @@ import { useState, FormEvent } from 'react';
 import { User, Phone, Mail } from 'lucide-react';
 import Logo from '../components/Logo';
 import FloatingIcons from '../components/FloatingIcons';
+import BackButton from '../components/BackButton';
 import { analytics } from '../utils/analytics';
 
 interface RegistrationPageProps {
   onComplete: (data: { name: string; phone: string; email: string }) => void;
   onNavigateToHome: () => void;
+  onBack: () => void;
 }
 
-function RegistrationPage({ onComplete, onNavigateToHome }: RegistrationPageProps) {
+function RegistrationPage({ onComplete, onNavigateToHome, onBack }: RegistrationPageProps) {
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -31,8 +33,10 @@ function RegistrationPage({ onComplete, onNavigateToHome }: RegistrationPageProp
       <FloatingIcons />
 
       <div className="relative w-full max-w-md">
-        <div className="py-8">
+        <div className="py-8 flex items-center justify-between">
+          <BackButton onClick={onBack} />
           <Logo onClick={onNavigateToHome} />
+          <div className="w-24"></div>
         </div>
 
         <div className="bg-gray-900/80 backdrop-blur-sm border-2 border-pink-500/30 rounded-2xl p-8 shadow-2xl shadow-pink-500/20">

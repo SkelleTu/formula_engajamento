@@ -22,6 +22,7 @@ class AnalyticsTracker {
   private maxScrollDepth: number;
   private eventQueue: any[];
   private isInitialized: boolean;
+  private isTrackingAllowed: boolean;
 
   constructor() {
     this.visitorId = this.getOrCreateVisitorId();
@@ -31,6 +32,7 @@ class AnalyticsTracker {
     this.maxScrollDepth = 0;
     this.eventQueue = [];
     this.isInitialized = false;
+    this.isTrackingAllowed = false; // Deny-by-default
   }
 
   private getOrCreateVisitorId(): string {
@@ -81,6 +83,20 @@ class AnalyticsTracker {
   async init() {
     if (this.isInitialized) return;
 
+    // DENY-BY-DEFAULT: Verificar DNT ANTES de fazer QUALQUER coisa
+    const dnt = navigator.doNotTrack || (window as any).doNotTrack || (navigator as any).msDoNotTrack;
+    
+    // Só permite tracking se DNT = '0' ou 'no' (explicitamente permitido)
+    if (dnt !== '0' && dnt !== 'no') {
+      console.log('🔒 Analytics desabilitado - Do Not Track ativado ou ausente (deny-by-default)');
+      this.isInitialized = true; // Marca como inicializado para não tentar novamente
+      this.isTrackingAllowed = false; // Bloqueia todos os métodos de tracking
+      return; // NÃO coleta NADA
+    }
+
+    console.log('✅ Analytics habilitado - Do Not Track explicitamente desabilitado');
+    this.isTrackingAllowed = true; // Permite tracking
+
     const visitorData: VisitorData = {
       userAgent: navigator.userAgent,
       deviceType: this.detectDevice(),
@@ -109,16 +125,7 @@ class AnalyticsTracker {
 
   private async collectAndSendSignals() {
     try {
-      // Deny-by-default: APENAS coletar se explicitamente permitido
-      const dnt = navigator.doNotTrack || (window as any).doNotTrack || (navigator as any).msDoNotTrack;
-      
-      // Se DNT é '1', 'yes', null, undefined, ou qualquer valor não-zero → NÃO coletar
-      // Só coleta se DNT = '0' ou 'no' (explicitamente permitido)
-      if (dnt !== '0' && dnt !== 'no') {
-        console.log('Coleta de sinais demográficos desabilitada (Do Not Track ou ausente)');
-        return;
-      }
-
+      // DNT já foi verificado no init(), aqui só coleta
       const deviceSignals = await collectDeviceSignals();
       const behavioralSignals = collectBehavioralSignals();
 
@@ -195,7 +202,7 @@ class AnalyticsTracker {
   }
 
   async trackEvent(eventType: string, eventData: any = {}) {
-    if (!this.isInitialized) return;
+    if (!this.isInitialized || !this.isTrackingAllowed) return;
     
     await this.sendData('/event', {
       visitorId: this.visitorId,
@@ -207,7 +214,7 @@ class AnalyticsTracker {
   }
 
   async trackPageView(timeSpent?: number) {
-    if (!this.isInitialized) return;
+    if (!this.isInitialized || !this.isTrackingAllowed) return;
     
     const time = timeSpent || Math.round((Date.now() - this.pageStartTime) / 1000);
     
@@ -226,7 +233,7 @@ class AnalyticsTracker {
   }
 
   async trackRegistration(data: { email?: string; name?: string; phone?: string; [key: string]: any }) {
-    if (!this.isInitialized) return;
+    if (!this.isInitialized || !this.isTrackingAllowed) return;
     
     await this.sendData('/registration', {
       visitorId: this.visitorId,

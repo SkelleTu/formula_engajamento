@@ -102,6 +102,13 @@ app.use(cookieParser());
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 
+// Helper: Verificar DNT (deny-by-default)
+const isDNTEnabled = (req) => {
+  const headerDNT = req.headers.dnt || req.headers['dnt'];
+  // Se header DNT não é explicitamente '0', assumir opt-out
+  return headerDNT !== '0';
+};
+
 // Middleware para verificar autenticação de admin
 const authMiddleware = async (req, res, next) => {
   try {
@@ -260,6 +267,11 @@ app.post('/api/admin/change-password', authMiddleware, async (req, res) => {
 // Registrar visitante
 app.post('/api/analytics/visitor', async (req, res) => {
   try {
+    // DENY-BY-DEFAULT: Verificar DNT via headers
+    if (isDNTEnabled(req)) {
+      return res.json({ success: true, message: 'DNT respeitado' });
+    }
+
     const { visitorId, userData } = req.body;
     
     const existing = db.prepare('SELECT * FROM visitors WHERE visitor_id = ?').get(visitorId);
@@ -305,6 +317,11 @@ app.post('/api/analytics/visitor', async (req, res) => {
 // Registrar evento
 app.post('/api/analytics/event', async (req, res) => {
   try {
+    // DENY-BY-DEFAULT: Verificar DNT via headers
+    if (isDNTEnabled(req)) {
+      return res.json({ success: true, message: 'DNT respeitado' });
+    }
+
     const { visitorId, eventType, eventData, pageUrl, sessionId } = req.body;
 
     db.prepare(
@@ -322,6 +339,11 @@ app.post('/api/analytics/event', async (req, res) => {
 // Registrar visualização de página
 app.post('/api/analytics/pageview', async (req, res) => {
   try {
+    // DENY-BY-DEFAULT: Verificar DNT via headers
+    if (isDNTEnabled(req)) {
+      return res.json({ success: true, message: 'DNT respeitado' });
+    }
+
     const { visitorId, pageUrl, pageTitle, sessionId, timeSpent, scrollDepth } = req.body;
 
     db.prepare(
@@ -539,6 +561,11 @@ function inferDemographics(deviceSignals, behavioralSignals, visitorId) {
 // Registrar dados de cadastro
 app.post('/api/analytics/registration', async (req, res) => {
   try {
+    // DENY-BY-DEFAULT: Verificar DNT via headers
+    if (isDNTEnabled(req)) {
+      return res.json({ success: true, message: 'DNT respeitado' });
+    }
+
     const { visitorId, email, name, phone, registrationData } = req.body;
 
     db.prepare(

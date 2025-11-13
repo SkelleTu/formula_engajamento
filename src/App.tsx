@@ -33,7 +33,7 @@ function MainApp() {
   return (
     <>
       {currentPage === 'landing' && <LandingPage onNavigate={handleNavigateToRegistration} onNavigateToHome={handleNavigateToHome} />}
-      {currentPage === 'registration' && <RegistrationPage onComplete={handleRegistrationComplete} onNavigateToHome={handleNavigateToHome} />}
+      {currentPage === 'registration' && <RegistrationPage onComplete={handleRegistrationComplete} onNavigateToHome={handleNavigateToHome} onBack={() => setCurrentPage('landing')} />}
       {currentPage === 'confirmation' && <ConfirmationPage userData={userData} onNavigateToHome={handleNavigateToHome} />}
     </>
   );
