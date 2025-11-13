@@ -147,7 +147,8 @@ app.post('/api/admin/login', async (req, res) => {
 
     res.json({ 
       success: true, 
-      username: admin.username
+      username: admin.username,
+      requiresPasswordChange: admin.requires_password_change === 1
     });
   } catch (error) {
     console.error('Erro no login:', error);
