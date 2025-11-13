@@ -360,7 +360,6 @@ function LandingPage({ onNavigate, onNavigateToHome }: LandingPageProps) {
                   <h4 className="text-white font-semibold mb-4">Contato</h4>
                   <p className="text-gray-400 mb-2">(19) 98734-0006</p>
                   <p className="text-gray-400 mb-2">(19) 3351-4262</p>
-                  <p className="text-pink-400">@juliao</p>
                 </div>
 
                 <div>
