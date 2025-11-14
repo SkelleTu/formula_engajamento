@@ -1009,47 +1009,46 @@ function AdminDashboard() {
 
         {activeTab === 'demographics' && (
           <div className="space-y-6">
-            {demographics && demographics.totalProfiles > 0 ? (
-              <>
-                {/* Header com estatísticas */}
-                <div className="bg-gray-900/50 backdrop-blur-sm border border-pink-500/20 rounded-2xl p-6 shadow-2xl">
-                  <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-3">
-                    <User className="w-7 h-7 text-pink-400" />
-                    Análise Demográfica Passiva
-                  </h2>
-                  <p className="text-purple-300 mb-6">
-                    Dados coletados automaticamente através de análise comportamental, fingerprinting e geo-IP. Total de {demographics.totalProfiles} perfis analisados.
-                  </p>
+            <>
+              {/* Header com estatísticas */}
+              <div className="bg-gray-900/50 backdrop-blur-sm border border-pink-500/20 rounded-2xl p-6 shadow-2xl">
+                <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-3">
+                  <User className="w-7 h-7 text-pink-400" />
+                  Análise Demográfica Passiva
+                </h2>
+                <p className="text-purple-300 mb-6">
+                  Dados coletados automaticamente através de análise comportamental, fingerprinting e geo-IP. Total de {demographics?.totalProfiles || 0} perfis analisados.
+                </p>
                   
-                  {/* Cards de confiança */}
-                  <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                    {[
-                      { label: 'Faixa Etária', value: demographics.averageConfidence.age_range, key: 'age_range' },
-                      { label: 'Gênero', value: demographics.averageConfidence.gender, key: 'gender' },
-                      { label: 'Ocupação', value: demographics.averageConfidence.occupation, key: 'occupation' },
-                      { label: 'Educação', value: demographics.averageConfidence.education_level, key: 'education' },
-                      { label: 'Interesses', value: demographics.averageConfidence.interests, key: 'interests' }
-                    ].map(item => {
-                      const percentage = Math.round(item.value * 100);
-                      const level = percentage >= 70 ? 'Alta' : percentage >= 40 ? 'Média' : 'Baixa';
-                      const color = percentage >= 70 ? 'text-green-400' : percentage >= 40 ? 'text-yellow-400' : 'text-orange-400';
-                      
-                      return (
-                        <div key={item.key} className="bg-gradient-to-br from-purple-500/10 to-pink-500/10 rounded-xl p-4 border border-purple-500/20">
-                          <p className="text-purple-300 text-xs mb-1">{item.label}</p>
-                          <p className={`text-2xl font-bold ${color}`}>{percentage}%</p>
-                          <p className="text-purple-400 text-xs mt-1">Confiança: {level}</p>
-                        </div>
-                      );
-                    })}
-                  </div>
+                {/* Cards de confiança */}
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                  {[
+                    { label: 'Faixa Etária', value: demographics?.averageConfidence?.age_range || 0, key: 'age_range' },
+                    { label: 'Gênero', value: demographics?.averageConfidence?.gender || 0, key: 'gender' },
+                    { label: 'Ocupação', value: demographics?.averageConfidence?.occupation || 0, key: 'occupation' },
+                    { label: 'Educação', value: demographics?.averageConfidence?.education_level || 0, key: 'education' },
+                    { label: 'Interesses', value: demographics?.averageConfidence?.interests || 0, key: 'interests' }
+                  ].map(item => {
+                    const percentage = Math.round(item.value * 100);
+                    const level = percentage >= 70 ? 'Alta' : percentage >= 40 ? 'Média' : 'Baixa';
+                    const color = percentage >= 70 ? 'text-green-400' : percentage >= 40 ? 'text-yellow-400' : 'text-orange-400';
+                    
+                    return (
+                      <div key={item.key} className="bg-gradient-to-br from-purple-500/10 to-pink-500/10 rounded-xl p-4 border border-purple-500/20">
+                        <p className="text-purple-300 text-xs mb-1">{item.label}</p>
+                        <p className={`text-2xl font-bold ${color}`}>{percentage}%</p>
+                        <p className="text-purple-400 text-xs mt-1">Confiança: {level}</p>
+                      </div>
+                    );
+                  })}
                 </div>
+              </div>
 
                 {/* Gráficos de Faixa Etária e Gênero */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   <AnalyticsCard 
                     title="Distribuição de Faixa Etária" 
-                    subtitle={`${demographics.ageDistribution.reduce((sum, item) => sum + item.count, 0)} visitantes analisados`}
+                    subtitle={`${(demographics?.ageDistribution || []).reduce((sum, item) => sum + item.count, 0)} visitantes analisados`}
                     icon={<Users className="w-5 h-5" />}
                     accentColor="purple"
                     chartType={chartPreferences.age.type}
@@ -1059,7 +1058,7 @@ function AdminDashboard() {
                   >
                     {chartPreferences.age.type === 'pie3d' && (
                       <EChartPie3D
-                        data={demographics.ageDistribution.map(item => ({
+                        data={(demographics?.ageDistribution || []).map(item => ({
                           name: item.age,
                           value: item.count
                         }))}
@@ -1069,7 +1068,7 @@ function AdminDashboard() {
                     )}
                     {chartPreferences.age.type === 'bar3d' && (
                       <EChartBar3D
-                        data={demographics.ageDistribution.map(item => ({
+                        data={(demographics?.ageDistribution || []).map(item => ({
                           name: item.age,
                           value: item.count
                         }))}
@@ -1079,7 +1078,7 @@ function AdminDashboard() {
                     )}
                     {chartPreferences.age.type === 'line' && (
                       <EChartLine
-                        data={demographics.ageDistribution.map(item => ({
+                        data={(demographics?.ageDistribution || []).map(item => ({
                           name: item.age,
                           value: item.count
                         }))}
@@ -1091,7 +1090,7 @@ function AdminDashboard() {
 
                   <AnalyticsCard 
                     title="Distribuição de Gênero" 
-                    subtitle={`${demographics.genderDistribution.reduce((sum, item) => sum + item.count, 0)} visitantes analisados`}
+                    subtitle={`${(demographics?.genderDistribution || []).reduce((sum, item) => sum + item.count, 0)} visitantes analisados`}
                     icon={<Users className="w-5 h-5" />}
                     accentColor="pink"
                     chartType={chartPreferences.gender.type}
@@ -1101,7 +1100,7 @@ function AdminDashboard() {
                   >
                     {chartPreferences.gender.type === 'pie3d' && (
                       <EChartPie3D
-                        data={demographics.genderDistribution.map(item => ({
+                        data={(demographics?.genderDistribution || []).map(item => ({
                           name: item.gender === 'M' ? 'Masculino' : item.gender === 'F' ? 'Feminino' : item.gender,
                           value: item.count
                         }))}
@@ -1111,7 +1110,7 @@ function AdminDashboard() {
                     )}
                     {chartPreferences.gender.type === 'bar3d' && (
                       <EChartBar3D
-                        data={demographics.genderDistribution.map(item => ({
+                        data={(demographics?.genderDistribution || []).map(item => ({
                           name: item.gender === 'M' ? 'Masculino' : item.gender === 'F' ? 'Feminino' : item.gender,
                           value: item.count
                         }))}
@@ -1121,7 +1120,7 @@ function AdminDashboard() {
                     )}
                     {chartPreferences.gender.type === 'line' && (
                       <EChartLine
-                        data={demographics.genderDistribution.map(item => ({
+                        data={(demographics?.genderDistribution || []).map(item => ({
                           name: item.gender === 'M' ? 'Masculino' : item.gender === 'F' ? 'Feminino' : item.gender,
                           value: item.count
                         }))}
@@ -1136,7 +1135,7 @@ function AdminDashboard() {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   <AnalyticsCard 
                     title="Distribuição de Ocupação" 
-                    subtitle={`Top ${demographics.occupationDistribution.length} ocupações identificadas`}
+                    subtitle={`Top ${(demographics?.occupationDistribution || []).length} ocupações identificadas`}
                     icon={<Activity className="w-5 h-5" />}
                     accentColor="blue"
                     chartType={chartPreferences.occupation.type}
@@ -1146,7 +1145,7 @@ function AdminDashboard() {
                   >
                     {chartPreferences.occupation.type === 'pie3d' && (
                       <EChartPie3D
-                        data={demographics.occupationDistribution.slice(0, 8).map(item => ({
+                        data={(demographics?.occupationDistribution || []).slice(0, 8).map(item => ({
                           name: item.occupation,
                           value: item.count
                         }))}
@@ -1156,7 +1155,7 @@ function AdminDashboard() {
                     )}
                     {chartPreferences.occupation.type === 'bar3d' && (
                       <EChartBar3D
-                        data={demographics.occupationDistribution.slice(0, 8).map(item => ({
+                        data={(demographics?.occupationDistribution || []).slice(0, 8).map(item => ({
                           name: item.occupation,
                           value: item.count
                         }))}
@@ -1166,7 +1165,7 @@ function AdminDashboard() {
                     )}
                     {chartPreferences.occupation.type === 'line' && (
                       <EChartLine
-                        data={demographics.occupationDistribution.slice(0, 8).map(item => ({
+                        data={(demographics?.occupationDistribution || []).slice(0, 8).map(item => ({
                           name: item.occupation,
                           value: item.count
                         }))}
@@ -1178,7 +1177,7 @@ function AdminDashboard() {
 
                   <AnalyticsCard 
                     title="Nível de Educação" 
-                    subtitle={`${demographics.educationDistribution.reduce((sum, item) => sum + item.count, 0)} visitantes analisados`}
+                    subtitle={`${(demographics?.educationDistribution || []).reduce((sum, item) => sum + item.count, 0)} visitantes analisados`}
                     icon={<Activity className="w-5 h-5" />}
                     accentColor="green"
                     chartType={chartPreferences.education.type}
@@ -1188,7 +1187,7 @@ function AdminDashboard() {
                   >
                     {chartPreferences.education.type === 'pie3d' && (
                       <EChartBar3D
-                        data={demographics.educationDistribution.map(item => ({
+                        data={(demographics?.educationDistribution || []).map(item => ({
                           name: item.education,
                           value: item.count
                         }))}
@@ -1198,7 +1197,7 @@ function AdminDashboard() {
                     )}
                     {chartPreferences.education.type === 'bar3d' && (
                       <EChartBar3D
-                        data={demographics.educationDistribution.map(item => ({
+                        data={(demographics?.educationDistribution || []).map(item => ({
                           name: item.education,
                           value: item.count
                         }))}
@@ -1208,7 +1207,7 @@ function AdminDashboard() {
                     )}
                     {chartPreferences.education.type === 'line' && (
                       <EChartLine
-                        data={demographics.educationDistribution.map(item => ({
+                        data={(demographics?.educationDistribution || []).map(item => ({
                           name: item.education,
                           value: item.count
                         }))}
@@ -1220,14 +1219,14 @@ function AdminDashboard() {
                 </div>
 
                 {/* Top Interesses */}
-                {demographics.topInterests.length > 0 && (
+                {(demographics?.topInterests || []).length > 0 && (
                   <div className="bg-gray-900/50 backdrop-blur-sm border border-pink-500/20 rounded-2xl p-6 shadow-2xl">
                     <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
                       <Sparkles className="w-6 h-6 text-pink-400" />
                       Top 10 Interesses Identificados
                     </h3>
                     <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-                      {demographics.topInterests.map((item, index) => (
+                      {(demographics?.topInterests || []).map((item, index) => (
                         <div 
                           key={index}
                           className="bg-gradient-to-br from-pink-500/10 to-purple-500/10 rounded-xl p-4 border border-pink-500/20 text-center"
@@ -1255,17 +1254,6 @@ function AdminDashboard() {
                   </ul>
                 </div>
               </>
-            ) : (
-              <div className="bg-gray-900/50 backdrop-blur-sm border border-pink-500/20 rounded-2xl p-12 shadow-2xl text-center">
-                <div className="inline-block p-6 bg-gradient-to-br from-purple-500/20 to-pink-500/20 rounded-full mb-6">
-                  <User className="w-16 h-16 text-purple-400" />
-                </div>
-                <h3 className="text-2xl font-bold text-white mb-4">Nenhum Dado Demográfico Disponível</h3>
-                <p className="text-purple-300 max-w-md mx-auto">
-                  Aguardando visitantes para coletar dados demográficos automaticamente através de análise comportamental e fingerprinting.
-                </p>
-              </div>
-            )}
           </div>
         )}
 
