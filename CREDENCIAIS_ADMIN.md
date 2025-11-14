@@ -5,23 +5,18 @@
 ### Victor (Proprietário)
 - **Usuário:** Victor
 - **Senha:** Victor.!.1999
-- **Status:** ✅ Senha permanente configurada
+- **Status:** ✅ Ativo
 
-### Julio (Proprietário)
-- **Usuário:** Julio
-- **Senha temporária:** temp123
-- **Status:** ⚠️ Aguardando primeiro login para definir senha permanente
+### Júlio Calori (Proprietário)
+- **Usuário:** JULIAOCALORI
+- **Senha:** FOCO20k
+- **Status:** ✅ Ativo
 
-## Primeiro Acesso do Julio
+## Acesso ao Painel Admin
 
 1. Acesse `/admin`
-2. Faça login com:
-   - Usuário: `Julio`
-   - Senha: `temp123`
-3. O sistema automaticamente pedirá para definir uma nova senha
-4. Defina uma senha segura (mínimo 6 caracteres)
-5. Confirme a senha
-6. Pronto! Acesso ao painel administrativo liberado
+2. Faça login com as credenciais acima
+3. Acesso ao painel administrativo liberado
 
 ## URL do Painel Admin
 
