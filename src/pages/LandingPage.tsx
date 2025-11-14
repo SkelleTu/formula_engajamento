@@ -348,8 +348,8 @@ function LandingPage({ onNavigate, onNavigateToHome }: LandingPageProps) {
         <footer className="border-t border-gray-800 bg-gray-900/50 backdrop-blur-sm">
           <div className="container mx-auto px-4 py-12">
             <div className="max-w-6xl mx-auto">
-              <div className="grid md:grid-cols-3 gap-8 mb-8">
-                <div className="text-center md:text-left">
+              <div className="mb-8">
+                <div className="text-center md:text-left mb-8">
                   <Logo />
                   <p className="text-gray-400 mt-4">
                     Transforme seu engajamento em crescimento real.
@@ -369,15 +369,15 @@ function LandingPage({ onNavigate, onNavigateToHome }: LandingPageProps) {
                   </div>
                 </div>
 
-                <div className="hidden md:block"></div>
-
-                <div className="text-center md:text-right">
-                  <div className="bg-gradient-to-br from-pink-500/10 to-purple-500/10 border border-pink-500/30 rounded-lg p-6">
-                    <Sparkles className="w-8 h-8 text-pink-400 mb-3 mx-auto md:ml-auto md:mr-0" />
-                    <h4 className="text-white font-bold mb-2">Seu Sucesso Começa Aqui</h4>
-                    <p className="text-gray-300 text-sm leading-relaxed">
-                      Cada curtida é uma oportunidade. Cada comentário, uma conexão. Cada compartilhamento, um novo começo.
-                    </p>
+                <div className="flex justify-center mt-8">
+                  <div className="bg-gradient-to-br from-pink-500/10 to-purple-500/10 border border-pink-500/30 rounded-lg p-6 max-w-md w-full">
+                    <div className="text-left">
+                      <Sparkles className="w-8 h-8 text-pink-400 mb-3" />
+                      <h4 className="text-white font-bold mb-2">Seu Sucesso Começa Aqui</h4>
+                      <p className="text-gray-300 text-sm leading-relaxed">
+                        Cada curtida é uma oportunidade. Cada comentário, uma conexão. Cada compartilhamento, um novo começo.
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
