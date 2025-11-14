@@ -1021,7 +1021,7 @@ function AdminDashboard() {
                 </p>
                   
                 {/* Cards de confiança */}
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
                   {[
                     { label: 'Faixa Etária', value: demographics?.averageConfidence?.age_range || 0, key: 'age_range' },
                     { label: 'Gênero', value: demographics?.averageConfidence?.gender || 0, key: 'gender' },
