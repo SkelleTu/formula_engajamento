@@ -370,7 +370,7 @@ function LandingPage({ onNavigate, onNavigateToHome }: LandingPageProps) {
                 </div>
 
                 <div className="flex items-start justify-center md:justify-start mt-16">
-                  <div className="bg-gradient-to-br from-pink-500/10 to-purple-500/10 border border-pink-500/30 rounded-lg p-6 max-w-md w-full">
+                  <div className="bg-gradient-to-br from-pink-500/10 to-purple-500/10 border border-pink-500/30 rounded-lg p-6 max-w-md w-full animate-float-fade">
                     <div className="text-left">
                       <Sparkles className="w-8 h-8 text-pink-400 mb-3" />
                       <h4 className="text-white font-bold mb-2">Seu Sucesso Começa Aqui</h4>
