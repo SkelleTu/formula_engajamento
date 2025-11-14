@@ -64,7 +64,9 @@ const upload = multer({
   }
 });
 
-// Configurar origens permitidas para CORS
+// Configurar CORS - permitir todas as origens em desenvolvimento
+const isProduction = process.env.NODE_ENV === 'production';
+
 const allowedOrigins = [
   'http://localhost:5000',
   'https://localhost:5000',
@@ -84,6 +86,11 @@ if (process.env.ALLOWED_ORIGINS) {
 
 app.use(cors({
   origin: (origin, callback) => {
+    // Em desenvolvimento, permitir todas as origens
+    if (!isProduction) {
+      return callback(null, true);
+    }
+    
     // Permitir requisições sem origin (como mobile apps ou curl)
     if (!origin) return callback(null, true);
     
