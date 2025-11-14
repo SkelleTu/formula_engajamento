@@ -28,11 +28,14 @@ export default function EChartLine({ data, chartId, sortOrder = 'desc' }: EChart
   const palette = chartConfig.palette || 'default';
   const colors = palettes[palette as keyof typeof palettes] || palettes.default;
 
+  // Se não houver dados, mostrar dados zerados
+  const displayData = data.length > 0 ? data : [{ name: 'Sem dados', value: 0 }];
+
   const sortedData = useMemo(() => 
-    [...data].sort((a, b) => 
+    [...displayData].sort((a, b) => 
       sortOrder === 'asc' ? a.value - b.value : b.value - a.value
     ),
-    [data, sortOrder]
+    [displayData, sortOrder]
   );
 
   const option = useMemo(() => ({

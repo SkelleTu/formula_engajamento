@@ -1444,7 +1444,7 @@ function AdminDashboard() {
               <div className="flex items-center justify-between mb-6">
                 <div>
                   <h2 className="text-3xl font-bold bg-gradient-to-r from-pink-400 to-purple-400 bg-clip-text text-transparent">
-                    📊 Análises Visuais Artísticas 3D
+                    Análise Técnica de Desenvolvedores (Analytics)
                   </h2>
                   <p className="text-purple-300 mt-2">Gráficos interativos profissionais com visualização 3D - Respeitam todos os filtros aplicados</p>
                 </div>

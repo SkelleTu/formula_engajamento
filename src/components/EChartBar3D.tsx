@@ -28,7 +28,11 @@ export default function EChartBar3D({ data, chartId, sortOrder = 'desc' }: EChar
 
   const option = useMemo(() => {
     const colors = paletteColors[config.palette] || paletteColors.default;
-    const sortedData = [...data]
+    
+    // Se não houver dados, mostrar dados zerados
+    const displayData = data.length > 0 ? data : [{ name: 'Sem dados', value: 0 }];
+    
+    const sortedData = [...displayData]
       .sort((a, b) => sortOrder === 'asc' ? a.value - b.value : b.value - a.value)
       .slice(0, 10);
     
