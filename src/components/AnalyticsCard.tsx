@@ -82,23 +82,23 @@ export default function AnalyticsCard({
         <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-pink-500/5 to-purple-500/5 rounded-full blur-3xl" />
         <div className="absolute bottom-0 left-0 w-32 h-32 bg-gradient-to-tr from-purple-500/5 to-pink-500/5 rounded-full blur-3xl" />
         
-        <div className="relative p-6">
-          <div className="flex items-start justify-between mb-4">
-            <div className="flex-1">
-              <div className="flex items-center gap-3 mb-1">
+        <div className="relative p-4 sm:p-6">
+          <div className="flex items-start justify-between mb-4 gap-2">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-3 mb-1 flex-wrap">
                 {icon && (
-                  <div className={`p-2 rounded-lg bg-gradient-to-br ${colors.gradient} ${colors.border} border`}>
+                  <div className={`p-2 rounded-lg bg-gradient-to-br ${colors.gradient} ${colors.border} border shrink-0`}>
                     <div className={colors.text}>
                       {icon}
                     </div>
                   </div>
                 )}
-                <h3 className="text-xl font-bold bg-gradient-to-r from-white via-purple-100 to-pink-100 bg-clip-text text-transparent">
+                <h3 className="text-lg sm:text-xl font-bold bg-gradient-to-r from-white via-purple-100 to-pink-100 bg-clip-text text-transparent break-words">
                   {title}
                 </h3>
               </div>
               {subtitle && (
-                <p className="text-sm text-purple-300/70 ml-1">
+                <p className="text-xs sm:text-sm text-purple-300/70 ml-1 break-words">
                   {subtitle}
                 </p>
               )}
@@ -106,7 +106,7 @@ export default function AnalyticsCard({
             
             {/* Controles de Visualização */}
             {onChartTypeChange && (
-              <div className="flex items-center gap-2 ml-4">
+              <div className="hidden sm:flex items-center gap-2 ml-4 shrink-0">
                 {/* Botões de tipo de gráfico */}
                 <div className="flex gap-1 bg-gray-800/50 rounded-lg p-1">
                   {chartTypeButtons.map(({ type, icon: Icon, label }) => (

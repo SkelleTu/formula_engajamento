@@ -1465,8 +1465,8 @@ function AdminDashboard() {
                 </button>
               </div>
               
-              {/* Gráficos Analytics - Layout Responsivo: 4 por linha (desktop), 2 por linha (mobile) */}
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+              {/* Gráficos Analytics - Layout Responsivo Mobile-First */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
                 <AnalyticsCard 
                   title="Dispositivos dos Visitantes" 
                   icon={<Monitor className="w-5 h-5" />}
