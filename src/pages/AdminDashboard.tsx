@@ -4,7 +4,7 @@ import { Users, Activity, FileText, Eye, Clock, MapPin, Monitor, LogOut, Calenda
 import FloatingIcons from '../components/FloatingIcons';
 import AnalyticsCard, { ChartType, SortOrder } from '../components/AnalyticsCard';
 import EChartPie3D from '../components/EChartPie3D';
-import EChartBar3D from '../components/EChartBar3D';
+import EChartBar from '../components/EChartBar';
 import EChartLine from '../components/EChartLine';
 import ChartConfigModal from '../components/ChartConfigModal';
 import { ChartConfigProvider } from '../contexts/ChartConfigContext';
@@ -103,12 +103,12 @@ function AdminDashboard() {
     browsers: { type: 'pie3d', sortOrder: 'desc' },
     os: { type: 'pie3d', sortOrder: 'desc' },
     registrationDevices: { type: 'pie3d', sortOrder: 'desc' },
-    countries: { type: 'bar3d', sortOrder: 'desc' },
-    cities: { type: 'bar3d', sortOrder: 'desc' },
+    countries: { type: 'bar', sortOrder: 'desc' },
+    cities: { type: 'bar', sortOrder: 'desc' },
     age: { type: 'pie3d', sortOrder: 'desc' },
     gender: { type: 'pie3d', sortOrder: 'desc' },
-    occupation: { type: 'bar3d', sortOrder: 'desc' },
-    education: { type: 'bar3d', sortOrder: 'desc' },
+    occupation: { type: 'bar', sortOrder: 'desc' },
+    education: { type: 'bar', sortOrder: 'desc' },
   });
 
   const updateChartPreference = (chartId: string, update: Partial<{ type: ChartType; sortOrder: SortOrder }>) => {
@@ -1067,7 +1067,7 @@ function AdminDashboard() {
                       />
                     )}
                     {chartPreferences.age.type === 'bar3d' && (
-                      <EChartBar3D
+                      <EChartBar
                         data={(demographics?.ageDistribution || []).map(item => ({
                           name: item.age,
                           value: item.count
@@ -1109,7 +1109,7 @@ function AdminDashboard() {
                       />
                     )}
                     {chartPreferences.gender.type === 'bar3d' && (
-                      <EChartBar3D
+                      <EChartBar
                         data={(demographics?.genderDistribution || []).map(item => ({
                           name: item.gender === 'M' ? 'Masculino' : item.gender === 'F' ? 'Feminino' : item.gender,
                           value: item.count
@@ -1154,7 +1154,7 @@ function AdminDashboard() {
                       />
                     )}
                     {chartPreferences.occupation.type === 'bar3d' && (
-                      <EChartBar3D
+                      <EChartBar
                         data={(demographics?.occupationDistribution || []).slice(0, 8).map(item => ({
                           name: item.occupation,
                           value: item.count
@@ -1186,7 +1186,7 @@ function AdminDashboard() {
                     onSortOrderChange={(sortOrder) => updateChartPreference('education', { sortOrder })}
                   >
                     {chartPreferences.education.type === 'pie3d' && (
-                      <EChartBar3D
+                      <EChartBar
                         data={(demographics?.educationDistribution || []).map(item => ({
                           name: item.education,
                           value: item.count
@@ -1196,7 +1196,7 @@ function AdminDashboard() {
                       />
                     )}
                     {chartPreferences.education.type === 'bar3d' && (
-                      <EChartBar3D
+                      <EChartBar
                         data={(demographics?.educationDistribution || []).map(item => ({
                           name: item.education,
                           value: item.count
@@ -1460,7 +1460,7 @@ function AdminDashboard() {
                     <EChartPie3D data={deviceChartData} chartId="devices" sortOrder={chartPreferences.devices.sortOrder} />
                   )}
                   {chartPreferences.devices.type === 'bar3d' && (
-                    <EChartBar3D data={deviceChartData} chartId="devices" sortOrder={chartPreferences.devices.sortOrder} />
+                    <EChartBar data={deviceChartData} chartId="devices" sortOrder={chartPreferences.devices.sortOrder} />
                   )}
                   {chartPreferences.devices.type === 'line' && (
                     <EChartLine data={deviceChartData} chartId="devices" sortOrder={chartPreferences.devices.sortOrder} />
@@ -1481,7 +1481,7 @@ function AdminDashboard() {
                     <EChartPie3D data={browserChartData} chartId="browsers" sortOrder={chartPreferences.browsers.sortOrder} />
                   )}
                   {chartPreferences.browsers.type === 'bar3d' && (
-                    <EChartBar3D data={browserChartData} chartId="browsers" sortOrder={chartPreferences.browsers.sortOrder} />
+                    <EChartBar data={browserChartData} chartId="browsers" sortOrder={chartPreferences.browsers.sortOrder} />
                   )}
                   {chartPreferences.browsers.type === 'line' && (
                     <EChartLine data={browserChartData} chartId="browsers" sortOrder={chartPreferences.browsers.sortOrder} />
@@ -1502,7 +1502,7 @@ function AdminDashboard() {
                     <EChartPie3D data={osChartData} chartId="os" sortOrder={chartPreferences.os.sortOrder} />
                   )}
                   {chartPreferences.os.type === 'bar3d' && (
-                    <EChartBar3D data={osChartData} chartId="os" sortOrder={chartPreferences.os.sortOrder} />
+                    <EChartBar data={osChartData} chartId="os" sortOrder={chartPreferences.os.sortOrder} />
                   )}
                   {chartPreferences.os.type === 'line' && (
                     <EChartLine data={osChartData} chartId="os" sortOrder={chartPreferences.os.sortOrder} />
@@ -1523,7 +1523,7 @@ function AdminDashboard() {
                     <EChartPie3D data={registrationDeviceData} chartId="registrationDevices" sortOrder={chartPreferences.registrationDevices.sortOrder} />
                   )}
                   {chartPreferences.registrationDevices.type === 'bar3d' && (
-                    <EChartBar3D data={registrationDeviceData} chartId="registrationDevices" sortOrder={chartPreferences.registrationDevices.sortOrder} />
+                    <EChartBar data={registrationDeviceData} chartId="registrationDevices" sortOrder={chartPreferences.registrationDevices.sortOrder} />
                   )}
                   {chartPreferences.registrationDevices.type === 'line' && (
                     <EChartLine data={registrationDeviceData} chartId="registrationDevices" sortOrder={chartPreferences.registrationDevices.sortOrder} />
@@ -1544,7 +1544,7 @@ function AdminDashboard() {
                     <EChartPie3D data={countryChartData} chartId="countries" sortOrder={chartPreferences.countries.sortOrder} />
                   )}
                   {chartPreferences.countries.type === 'bar3d' && (
-                    <EChartBar3D data={countryChartData} chartId="countries" sortOrder={chartPreferences.countries.sortOrder} />
+                    <EChartBar data={countryChartData} chartId="countries" sortOrder={chartPreferences.countries.sortOrder} />
                   )}
                   {chartPreferences.countries.type === 'line' && (
                     <EChartLine data={countryChartData} chartId="countries" sortOrder={chartPreferences.countries.sortOrder} />
@@ -1565,7 +1565,7 @@ function AdminDashboard() {
                     <EChartPie3D data={cityChartData} chartId="cities" sortOrder={chartPreferences.cities.sortOrder} />
                   )}
                   {chartPreferences.cities.type === 'bar3d' && (
-                    <EChartBar3D data={cityChartData} chartId="cities" sortOrder={chartPreferences.cities.sortOrder} />
+                    <EChartBar data={cityChartData} chartId="cities" sortOrder={chartPreferences.cities.sortOrder} />
                   )}
                   {chartPreferences.cities.type === 'line' && (
                     <EChartLine data={cityChartData} chartId="cities" sortOrder={chartPreferences.cities.sortOrder} />

@@ -1,7 +1,7 @@
 import { ReactNode } from 'react';
 import { BarChart3, PieChart, TrendingUp, ArrowUpDown } from 'lucide-react';
 
-export type ChartType = 'pie3d' | 'bar3d' | 'line';
+export type ChartType = 'pie3d' | 'bar3d' | 'bar' | 'line';
 export type SortOrder = 'asc' | 'desc';
 
 interface AnalyticsCardProps {
@@ -66,7 +66,7 @@ export default function AnalyticsCard({
 
   const chartTypeButtons = [
     { type: 'pie3d' as ChartType, icon: PieChart, label: 'Pizza 3D' },
-    { type: 'bar3d' as ChartType, icon: BarChart3, label: 'Barras 3D' },
+    { type: 'bar' as ChartType, icon: BarChart3, label: 'Barras' },
     { type: 'line' as ChartType, icon: TrendingUp, label: 'Linhas' },
   ];
 
