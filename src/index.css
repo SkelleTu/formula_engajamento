@@ -39,6 +39,11 @@
     animation: float-fade 4s ease-in-out infinite;
   }
 
+  .animate-float-fade-delayed {
+    animation: float-fade 5s ease-in-out infinite;
+    animation-delay: 1.5s;
+  }
+
   @keyframes fadeIn {
     from {
       opacity: 0;
