@@ -1,4 +1,8 @@
 import { ReactNode } from 'react';
+import { BarChart3, PieChart, TrendingUp, ArrowUpDown } from 'lucide-react';
+
+export type ChartType = 'pie3d' | 'bar3d' | 'line';
+export type SortOrder = 'asc' | 'desc';
 
 interface AnalyticsCardProps {
   title: string;
@@ -7,6 +11,10 @@ interface AnalyticsCardProps {
   icon?: ReactNode;
   accentColor?: 'pink' | 'purple' | 'blue' | 'green' | 'orange';
   className?: string;
+  chartType?: ChartType;
+  sortOrder?: SortOrder;
+  onChartTypeChange?: (type: ChartType) => void;
+  onSortOrderChange?: (order: SortOrder) => void;
 }
 
 const accentColors = {
@@ -48,9 +56,19 @@ export default function AnalyticsCard({
   children, 
   icon,
   accentColor = 'purple',
-  className = ''
+  className = '',
+  chartType = 'pie3d',
+  sortOrder = 'desc',
+  onChartTypeChange,
+  onSortOrderChange
 }: AnalyticsCardProps) {
   const colors = accentColors[accentColor];
+
+  const chartTypeButtons = [
+    { type: 'pie3d' as ChartType, icon: PieChart, label: 'Pizza 3D' },
+    { type: 'bar3d' as ChartType, icon: BarChart3, label: 'Barras 3D' },
+    { type: 'line' as ChartType, icon: TrendingUp, label: 'Linhas' },
+  ];
 
   return (
     <div className={`group relative ${className}`}>
@@ -85,6 +103,44 @@ export default function AnalyticsCard({
                 </p>
               )}
             </div>
+            
+            {/* Controles de Visualização */}
+            {onChartTypeChange && (
+              <div className="flex items-center gap-2 ml-4">
+                {/* Botões de tipo de gráfico */}
+                <div className="flex gap-1 bg-gray-800/50 rounded-lg p-1">
+                  {chartTypeButtons.map(({ type, icon: Icon, label }) => (
+                    <button
+                      key={type}
+                      onClick={() => onChartTypeChange(type)}
+                      className={`p-2 rounded transition-all ${
+                        chartType === type
+                          ? `bg-gradient-to-r from-pink-500 to-purple-600 ${colors.text} shadow-lg`
+                          : 'text-purple-400 hover:text-white hover:bg-gray-700/50'
+                      }`}
+                      title={label}
+                    >
+                      <Icon className="w-4 h-4" />
+                    </button>
+                  ))}
+                </div>
+                
+                {/* Botão de ordenação */}
+                {onSortOrderChange && (
+                  <button
+                    onClick={() => onSortOrderChange(sortOrder === 'asc' ? 'desc' : 'asc')}
+                    className={`p-2 rounded-lg transition-all ${
+                      sortOrder === 'desc'
+                        ? 'bg-gradient-to-r from-pink-500 to-purple-600 text-white shadow-lg'
+                        : 'bg-gray-800/50 text-purple-400 hover:text-white hover:bg-gray-700/50'
+                    }`}
+                    title={sortOrder === 'desc' ? 'Maior para Menor' : 'Menor para Maior'}
+                  >
+                    <ArrowUpDown className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+            )}
           </div>
           
           <div className="relative z-10">

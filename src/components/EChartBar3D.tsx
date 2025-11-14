@@ -10,7 +10,8 @@ interface DataItem {
 
 interface EChartBar3DProps {
   data: DataItem[];
-  chartId: 'countries' | 'cities';
+  chartId: string;
+  sortOrder?: 'asc' | 'desc';
 }
 
 const paletteColors = {
@@ -21,13 +22,15 @@ const paletteColors = {
   forest: ['#2d6a4f', '#40916c', '#52b788', '#74c69d', '#95d5b2', '#b7e4c7', '#1b4332', '#081c15'],
 };
 
-export default function EChartBar3D({ data, chartId }: EChartBar3DProps) {
+export default function EChartBar3D({ data, chartId, sortOrder = 'desc' }: EChartBar3DProps) {
   const { configs } = useChartConfig();
-  const config: ChartConfig = configs[chartId];
+  const config: ChartConfig = configs[chartId as keyof typeof configs] || {} as ChartConfig;
 
   const option = useMemo(() => {
     const colors = paletteColors[config.palette] || paletteColors.default;
-    const sortedData = [...data].sort((a, b) => b.value - a.value).slice(0, 10);
+    const sortedData = [...data]
+      .sort((a, b) => sortOrder === 'asc' ? a.value - b.value : b.value - a.value)
+      .slice(0, 10);
     
     if (config.chartType === '2d') {
       return {
@@ -200,7 +203,7 @@ export default function EChartBar3D({ data, chartId }: EChartBar3DProps) {
         },
       ],
     };
-  }, [data, config]);
+  }, [data, config, sortOrder]);
 
   return (
     <ReactECharts

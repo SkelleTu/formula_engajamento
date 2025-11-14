@@ -10,7 +10,8 @@ interface DataItem {
 
 interface EChartPie3DProps {
   data: DataItem[];
-  chartId: 'devices' | 'browsers' | 'os' | 'registrationDevices';
+  chartId: string;
+  sortOrder?: 'asc' | 'desc';
 }
 
 const paletteColors = {
@@ -21,12 +22,16 @@ const paletteColors = {
   forest: ['#2d6a4f', '#40916c', '#52b788', '#74c69d', '#95d5b2', '#b7e4c7', '#1b4332', '#081c15'],
 };
 
-export default function EChartPie3D({ data, chartId }: EChartPie3DProps) {
+export default function EChartPie3D({ data, chartId, sortOrder = 'desc' }: EChartPie3DProps) {
   const { configs } = useChartConfig();
-  const config: ChartConfig = configs[chartId];
+  const config: ChartConfig = configs[chartId as keyof typeof configs] || {} as ChartConfig;
 
   const option = useMemo(() => {
     const colors = paletteColors[config.palette] || paletteColors.default;
+    
+    const sortedData = [...data].sort((a, b) => 
+      sortOrder === 'asc' ? a.value - b.value : b.value - a.value
+    );
     
     if (config.chartType === '2d') {
       return {
@@ -79,7 +84,7 @@ export default function EChartPie3D({ data, chartId }: EChartPie3DProps) {
               show: config.showLabels,
               lineStyle: { color: 'rgba(255, 255, 255, 0.3)' },
             },
-            data: data.map((item, index) => ({
+            data: sortedData.map((item, index) => ({
               ...item,
               itemStyle: { color: colors[index % colors.length] },
             })),
@@ -111,7 +116,7 @@ export default function EChartPie3D({ data, chartId }: EChartPie3DProps) {
           type: 'pie',
           radius: ['35%', '70%'],
           center: ['50%', '40%'],
-          data: data.map((item, index) => {
+          data: sortedData.map((item, index) => {
             const baseColor = colors[index % colors.length];
             return {
               ...item,
@@ -169,7 +174,7 @@ export default function EChartPie3D({ data, chartId }: EChartPie3DProps) {
         },
       ],
     };
-  }, [data, config]);
+  }, [data, config, sortOrder]);
 
   return (
     <ReactECharts

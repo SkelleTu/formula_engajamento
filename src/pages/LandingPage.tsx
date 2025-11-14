@@ -359,14 +359,6 @@ function LandingPage({ onNavigate, onNavigateToHome }: LandingPageProps) {
                 <div>
                   <h4 className="text-white font-semibold mb-4">Contato</h4>
                   <p className="text-gray-400 mb-2">(19) 98734-0006</p>
-                  <p className="text-gray-400 mb-2">(19) 3351-4262</p>
-                </div>
-
-                <div>
-                  <h4 className="text-white font-semibold mb-4">Endereço</h4>
-                  <p className="text-gray-400">Goncalves Ledo, 827</p>
-                  <p className="text-gray-400">Jardim Abolição</p>
-                  <p className="text-gray-400">São Paulo - Brasil</p>
                 </div>
               </div>
 
