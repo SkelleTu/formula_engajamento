@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { CheckCircle, Zap, Users, TrendingUp, Award, Target, Rocket, Heart, MessageCircle, Share2, Star, Sparkles, Crown, Globe } from 'lucide-react';
+import { CheckCircle, Zap, Users, TrendingUp, Award, Target, Rocket, Heart, MessageCircle, Share2, Star, Sparkles, Crown, Globe, Phone } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Logo from '../components/Logo';
 import FloatingIcons from '../components/FloatingIcons';
@@ -348,17 +348,26 @@ function LandingPage({ onNavigate, onNavigateToHome }: LandingPageProps) {
         <footer className="border-t border-gray-800 bg-gray-900/50 backdrop-blur-sm">
           <div className="container mx-auto px-4 py-12">
             <div className="max-w-6xl mx-auto">
-              <div className="grid md:grid-cols-3 gap-8 mb-8">
-                <div>
+              <div className="flex flex-col md:flex-row items-center justify-between gap-8 mb-8">
+                <div className="text-center md:text-left">
                   <Logo />
                   <p className="text-gray-400 mt-4">
                     Transforme seu engajamento em crescimento real.
                   </p>
                 </div>
 
-                <div>
+                <div className="text-center md:text-right">
                   <h4 className="text-white font-semibold mb-4">Contato</h4>
-                  <p className="text-gray-400 mb-2">(19) 98734-0006</p>
+                  <a 
+                    href="https://wa.me/5519987340006" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 text-gray-400 hover:text-green-400 transition-colors duration-300"
+                  >
+                    <Phone className="w-5 h-5 fill-current" />
+                    <span>(19) 98734-0006</span>
+                  </a>
+                  <p className="text-gray-500 text-xs mt-2">Somente via WhatsApp</p>
                 </div>
               </div>
 
