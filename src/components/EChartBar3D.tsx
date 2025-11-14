@@ -29,8 +29,12 @@ export default function EChartBar3D({ data, chartId, sortOrder = 'desc' }: EChar
   const option = useMemo(() => {
     const colors = paletteColors[config.palette] || paletteColors.default;
     
-    // Se não houver dados, mostrar dados zerados
-    const displayData = data.length > 0 ? data : [{ name: 'Sem dados', value: 0 }];
+    // Se não houver dados, mostrar dados zerados com múltiplos itens para evitar erros de renderização
+    const displayData = data.length > 0 ? data : [
+      { name: 'Aguardando', value: 0 },
+      { name: 'dados', value: 0 },
+      { name: '...', value: 0 }
+    ];
     
     const sortedData = [...displayData]
       .sort((a, b) => sortOrder === 'asc' ? a.value - b.value : b.value - a.value)
@@ -161,9 +165,9 @@ export default function EChartBar3D({ data, chartId, sortOrder = 'desc' }: EChar
       grid3D: {
         viewControl: {
           autoRotate: config.enable3DRotation,
-          distance: 200,
-          alpha: 25,
-          beta: 40,
+          distance: 150,
+          alpha: 20,
+          beta: 0,
           rotateSensitivity: 1,
           zoomSensitivity: 1,
         },
