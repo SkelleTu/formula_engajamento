@@ -1153,6 +1153,16 @@ function AdminDashboard() {
                         sortOrder={chartPreferences.occupation.sortOrder}
                       />
                     )}
+                    {chartPreferences.occupation.type === 'bar' && (
+                      <EChartBar
+                        data={(demographics?.occupationDistribution || []).slice(0, 8).map(item => ({
+                          name: item.occupation,
+                          value: item.count
+                        }))}
+                        chartId="occupation-distribution"
+                        sortOrder={chartPreferences.occupation.sortOrder}
+                      />
+                    )}
                     {chartPreferences.occupation.type === 'bar3d' && (
                       <EChartBar
                         data={(demographics?.occupationDistribution || []).slice(0, 8).map(item => ({
@@ -1186,6 +1196,16 @@ function AdminDashboard() {
                     onSortOrderChange={(sortOrder) => updateChartPreference('education', { sortOrder })}
                   >
                     {chartPreferences.education.type === 'pie3d' && (
+                      <EChartPie3D
+                        data={(demographics?.educationDistribution || []).map(item => ({
+                          name: item.education,
+                          value: item.count
+                        }))}
+                        chartId="education-distribution"
+                        sortOrder={chartPreferences.education.sortOrder}
+                      />
+                    )}
+                    {chartPreferences.education.type === 'bar' && (
                       <EChartBar
                         data={(demographics?.educationDistribution || []).map(item => ({
                           name: item.education,
@@ -1543,6 +1563,9 @@ function AdminDashboard() {
                   {chartPreferences.countries.type === 'pie3d' && (
                     <EChartPie3D data={countryChartData} chartId="countries" sortOrder={chartPreferences.countries.sortOrder} />
                   )}
+                  {chartPreferences.countries.type === 'bar' && (
+                    <EChartBar data={countryChartData} chartId="countries" sortOrder={chartPreferences.countries.sortOrder} />
+                  )}
                   {chartPreferences.countries.type === 'bar3d' && (
                     <EChartBar data={countryChartData} chartId="countries" sortOrder={chartPreferences.countries.sortOrder} />
                   )}
@@ -1563,6 +1586,9 @@ function AdminDashboard() {
                 >
                   {chartPreferences.cities.type === 'pie3d' && (
                     <EChartPie3D data={cityChartData} chartId="cities" sortOrder={chartPreferences.cities.sortOrder} />
+                  )}
+                  {chartPreferences.cities.type === 'bar' && (
+                    <EChartBar data={cityChartData} chartId="cities" sortOrder={chartPreferences.cities.sortOrder} />
                   )}
                   {chartPreferences.cities.type === 'bar3d' && (
                     <EChartBar data={cityChartData} chartId="cities" sortOrder={chartPreferences.cities.sortOrder} />
