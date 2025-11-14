@@ -348,8 +348,8 @@ function LandingPage({ onNavigate, onNavigateToHome }: LandingPageProps) {
         <footer className="border-t border-gray-800 bg-gray-900/50 backdrop-blur-sm">
           <div className="container mx-auto px-4 py-12">
             <div className="max-w-6xl mx-auto">
-              <div className="mb-8">
-                <div className="text-center md:text-left mb-8">
+              <div className="grid md:grid-cols-2 gap-12 mb-8 items-start">
+                <div className="text-center md:text-left">
                   <Logo />
                   <p className="text-gray-400 mt-4">
                     Transforme seu engajamento em crescimento real.
@@ -369,7 +369,7 @@ function LandingPage({ onNavigate, onNavigateToHome }: LandingPageProps) {
                   </div>
                 </div>
 
-                <div className="flex justify-center mt-8">
+                <div className="flex items-start justify-center md:justify-start mt-8">
                   <div className="bg-gradient-to-br from-pink-500/10 to-purple-500/10 border border-pink-500/30 rounded-lg p-6 max-w-md w-full">
                     <div className="text-left">
                       <Sparkles className="w-8 h-8 text-pink-400 mb-3" />
