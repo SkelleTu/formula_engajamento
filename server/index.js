@@ -687,8 +687,8 @@ app.get('/api/admin/events', authMiddleware, async (req, res) => {
 // Dashboard: Obter dados demográficos agregados
 app.get('/api/admin/demographics', authMiddleware, async (req, res) => {
   try {
-    // Buscar todos os visitantes com dados demográficos
-    const visitors = db.prepare('SELECT inferred_demographics FROM visitors WHERE inferred_demographics IS NOT NULL').all();
+    // Buscar todos os visitantes com dados demográficos (colunas individuais)
+    const visitors = db.prepare('SELECT age_range, gender, occupation, education_level, interests FROM visitors').all();
     
     if (!visitors || visitors.length === 0) {
       return res.json({
@@ -714,75 +714,37 @@ app.get('/api/admin/demographics', authMiddleware, async (req, res) => {
     const occupationCount = {};
     const educationCount = {};
     const interestsCount = {};
-    
-    let totalConfidence = {
-      age_range: 0,
-      gender: 0,
-      occupation: 0,
-      education_level: 0,
-      interests: 0
-    };
-    let confidenceCounts = {
-      age_range: 0,
-      gender: 0,
-      occupation: 0,
-      education_level: 0,
-      interests: 0
-    };
 
     // Processar cada visitante
     visitors.forEach(v => {
       try {
-        const demographics = typeof v.inferred_demographics === 'string' 
-          ? JSON.parse(v.inferred_demographics) 
-          : v.inferred_demographics;
-
-        if (!demographics) return;
-
         // Idade
-        if (demographics.age_range?.value) {
-          ageCount[demographics.age_range.value] = (ageCount[demographics.age_range.value] || 0) + 1;
-          if (demographics.age_range.confidence) {
-            totalConfidence.age_range += demographics.age_range.confidence;
-            confidenceCounts.age_range++;
-          }
+        if (v.age_range) {
+          ageCount[v.age_range] = (ageCount[v.age_range] || 0) + 1;
         }
 
         // Gênero
-        if (demographics.gender?.value) {
-          genderCount[demographics.gender.value] = (genderCount[demographics.gender.value] || 0) + 1;
-          if (demographics.gender.confidence) {
-            totalConfidence.gender += demographics.gender.confidence;
-            confidenceCounts.gender++;
-          }
+        if (v.gender) {
+          genderCount[v.gender] = (genderCount[v.gender] || 0) + 1;
         }
 
         // Ocupação
-        if (demographics.occupation?.value) {
-          occupationCount[demographics.occupation.value] = (occupationCount[demographics.occupation.value] || 0) + 1;
-          if (demographics.occupation.confidence) {
-            totalConfidence.occupation += demographics.occupation.confidence;
-            confidenceCounts.occupation++;
-          }
+        if (v.occupation) {
+          occupationCount[v.occupation] = (occupationCount[v.occupation] || 0) + 1;
         }
 
         // Educação
-        if (demographics.education_level?.value) {
-          educationCount[demographics.education_level.value] = (educationCount[demographics.education_level.value] || 0) + 1;
-          if (demographics.education_level.confidence) {
-            totalConfidence.education_level += demographics.education_level.confidence;
-            confidenceCounts.education_level++;
-          }
+        if (v.education_level) {
+          educationCount[v.education_level] = (educationCount[v.education_level] || 0) + 1;
         }
 
         // Interesses
-        if (demographics.interests?.value && Array.isArray(demographics.interests.value)) {
-          demographics.interests.value.forEach(interest => {
-            interestsCount[interest] = (interestsCount[interest] || 0) + 1;
-          });
-          if (demographics.interests.confidence) {
-            totalConfidence.interests += demographics.interests.confidence;
-            confidenceCounts.interests++;
+        if (v.interests) {
+          const interests = typeof v.interests === 'string' ? JSON.parse(v.interests) : v.interests;
+          if (Array.isArray(interests)) {
+            interests.forEach(interest => {
+              interestsCount[interest] = (interestsCount[interest] || 0) + 1;
+            });
           }
         }
       } catch (parseError) {
@@ -812,13 +774,13 @@ app.get('/api/admin/demographics', authMiddleware, async (req, res) => {
       .sort((a, b) => b.count - a.count)
       .slice(0, 10);
 
-    // Calcular médias de confiança
+    // Confidence não está disponível nos dados atuais
     const averageConfidence = {
-      age_range: confidenceCounts.age_range > 0 ? (totalConfidence.age_range / confidenceCounts.age_range) : 0,
-      gender: confidenceCounts.gender > 0 ? (totalConfidence.gender / confidenceCounts.gender) : 0,
-      occupation: confidenceCounts.occupation > 0 ? (totalConfidence.occupation / confidenceCounts.occupation) : 0,
-      education_level: confidenceCounts.education_level > 0 ? (totalConfidence.education_level / confidenceCounts.education_level) : 0,
-      interests: confidenceCounts.interests > 0 ? (totalConfidence.interests / confidenceCounts.interests) : 0
+      age_range: 0,
+      gender: 0,
+      occupation: 0,
+      education_level: 0,
+      interests: 0
     };
 
     res.json({
