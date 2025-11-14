@@ -24,31 +24,34 @@ console.log('TESTANDO CREDENCIAIS FORNECIDAS:');
 console.log('='.repeat(60));
 console.log('');
 
-const testCredentials = [
-  { username: 'Victor', password: 'Victor.!.1999' },
-  { username: 'JULIOCALORI', password: 'FOCO20K' },
-  { username: 'JULIAOCALORI', password: 'FOCO20K' }
-];
-
-for (const cred of testCredentials) {
-  console.log(`Testando: ${cred.username} / ${cred.password}`);
+if (process.argv.length > 2) {
+  const testUsername = process.argv[2];
+  const testPassword = process.argv[3];
   
-  const admin = db.prepare('SELECT * FROM admins WHERE username = ?').get(cred.username);
-  
-  if (!admin) {
-    console.log(`❌ ERRO: Usuário "${cred.username}" NÃO encontrado no banco de dados`);
+  if (!testUsername || !testPassword) {
+    console.log('💡 Uso: node scripts/test-login.js <username> <senha>');
     console.log('');
-    continue;
-  }
-  
-  const isValid = await bcrypt.compare(cred.password, admin.password_hash);
-  
-  if (isValid) {
-    console.log(`✅ SUCESSO: Credenciais válidas!`);
   } else {
-    console.log(`❌ ERRO: Senha incorreta para o usuário "${cred.username}"`);
+    console.log(`Testando credenciais fornecidas...`);
+    console.log('');
+    
+    const admin = db.prepare('SELECT * FROM admins WHERE username = ?').get(testUsername);
+    
+    if (!admin) {
+      console.log(`❌ ERRO: Usuário "${testUsername}" NÃO encontrado no banco de dados`);
+      console.log('');
+    } else {
+      const isValid = await bcrypt.compare(testPassword, admin.password_hash);
+      
+      if (isValid) {
+        console.log(`✅ SUCESSO: Credenciais válidas!`);
+        console.log(`👤 Usuário: ${testUsername}`);
+      } else {
+        console.log(`❌ ERRO: Senha incorreta para o usuário "${testUsername}"`);
+      }
+      console.log('');
+    }
   }
-  console.log('');
 }
 
 console.log('='.repeat(60));
