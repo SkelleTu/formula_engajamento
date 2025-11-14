@@ -131,7 +131,7 @@ export default function EChartBar3D({ data, chartId, sortOrder = 'desc' }: EChar
       visualMap: {
         show: false,
         min: 0,
-        max: Math.max(...sortedData.map(d => d.value)),
+        max: Math.max(...sortedData.map(d => d.value), 1),
         inRange: {
           color: colors,
         },
