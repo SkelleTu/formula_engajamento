@@ -5,6 +5,30 @@ Funil is a video-based landing page application designed to capture leads throug
 
 ## Recent Changes (November 2025)
 
+### Vercel Deployment Fix - API Connection Configuration
+**Date**: November 22, 2025
+**Status**: ✅ Implemented and Documented
+
+Fixed critical issue where the admin panel couldn't connect to the backend when deployed to Vercel. The problem was that all API calls used relative URLs that worked with Vite's proxy in development (Replit) but failed in production (Vercel).
+
+**Changes Made:**
+1. ✅ Created `src/config/api.ts` - centralized API URL configuration
+2. ✅ Updated all components to use `apiUrl()` helper function:
+   - `src/pages/AdminLoginPage.tsx`
+   - `src/pages/AdminDashboard.tsx`
+   - `src/components/VideoPlayer.tsx`
+   - `src/contexts/ChartConfigContext.tsx`
+   - `src/utils/optOut.ts`
+3. ✅ Added `VITE_API_BASE_URL` environment variable support
+4. ✅ Updated `.env.example` with deployment instructions
+5. ✅ Created comprehensive `INSTRUCOES_DEPLOY_VERCEL.md` guide
+
+**How It Works:**
+- **Development (Replit)**: Leave `VITE_API_BASE_URL` empty → uses Vite proxy (localhost:3001)
+- **Production (Vercel)**: Set `VITE_API_BASE_URL=https://your-backend.com` → all API calls go to the backend URL
+
+**Deployment Guide**: See `INSTRUCOES_DEPLOY_VERCEL.md` for complete step-by-step instructions.
+
 ### Analytics System - Critical Bug Fixes
 **Date**: November 13, 2025
 **Status**: ✅ Fully Fixed and Tested
@@ -123,3 +147,4 @@ Preferred communication style: Simple, everyday language.
 - `PORT`: Backend server port.
 - `NODE_ENV`: Environment mode.
 - `ALLOW_ADMIN_CREATION`: Security flag for admin creation.
+- `VITE_API_BASE_URL`: (Frontend only) Backend API URL for production deployments. Leave empty in development.

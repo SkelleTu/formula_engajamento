@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import { apiUrl } from '../config/api';
 
 export type ChartType = '2d' | '3d';
 export type ChartStyle = 'default' | 'gradient' | 'neon' | 'pastel';
@@ -59,7 +60,7 @@ export function ChartConfigProvider({ children }: { children: ReactNode }) {
 
   const loadFromServer = useCallback(async () => {
     try {
-      const response = await fetch('/api/admin/chart-config', {
+      const response = await fetch(apiUrl('/api/admin/chart-config'), {
         method: 'GET',
         credentials: 'include',
       });
@@ -103,7 +104,7 @@ export function ChartConfigProvider({ children }: { children: ReactNode }) {
 
   const saveToServer = async () => {
     try {
-      const response = await fetch('/api/admin/chart-config', {
+      const response = await fetch(apiUrl('/api/admin/chart-config'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',

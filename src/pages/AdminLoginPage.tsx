@@ -2,6 +2,7 @@ import { useState, FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import FloatingIcons from '../components/FloatingIcons';
 import BackButton from '../components/BackButton';
+import { apiUrl } from '../config/api';
 
 export default function AdminLoginPage() {
   const [username, setUsername] = useState('');
@@ -20,7 +21,7 @@ export default function AdminLoginPage() {
     setLoading(true);
 
     try {
-      const response = await fetch('/api/admin/login', {
+      const response = await fetch(apiUrl('/api/admin/login'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -69,7 +70,7 @@ export default function AdminLoginPage() {
     setLoading(true);
 
     try {
-      const response = await fetch('/api/admin/change-password', {
+      const response = await fetch(apiUrl('/api/admin/change-password'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

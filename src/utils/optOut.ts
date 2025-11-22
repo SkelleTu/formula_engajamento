@@ -1,4 +1,5 @@
 // Utilitário para opt-out e exclusão de dados (LGPD)
+import { apiUrl } from '../config/api';
 
 export async function deleteMyData(): Promise<boolean> {
   try {
@@ -9,7 +10,7 @@ export async function deleteMyData(): Promise<boolean> {
       return true;
     }
 
-    const response = await fetch('/api/analytics/delete-my-data', {
+    const response = await fetch(apiUrl('/api/analytics/delete-my-data'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { apiUrl } from '../config/api';
 
 interface VideoPlayerProps {
   onButtonEnable: () => void;
@@ -34,7 +35,7 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
 
   const loadVideoConfig = async () => {
     try {
-      const response = await fetch('/api/video/current');
+      const response = await fetch(apiUrl('/api/video/current'));
       const data = await response.json();
       
       if (data.video) {

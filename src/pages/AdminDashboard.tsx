@@ -8,6 +8,7 @@ import EChartBar from '../components/EChartBar';
 import EChartLine from '../components/EChartLine';
 import ChartConfigModal from '../components/ChartConfigModal';
 import { ChartConfigProvider } from '../contexts/ChartConfigContext';
+import { apiUrl } from '../config/api';
 
 interface Stats {
   totalVisitors: number;
@@ -130,7 +131,7 @@ function AdminDashboard() {
 
   const checkAuth = async () => {
     try {
-      const response = await fetch('/api/admin/verify', {
+      const response = await fetch(apiUrl('/api/admin/verify'), {
         credentials: 'include'
       });
 
@@ -151,10 +152,10 @@ function AdminDashboard() {
     
     try {
       const [statsRes, visitorsRes, registrationsRes, demographicsRes] = await Promise.all([
-        fetch('/api/admin/stats', { credentials: 'include' }),
-        fetch('/api/admin/visitors?limit=100', { credentials: 'include' }),
-        fetch('/api/admin/registrations?limit=100', { credentials: 'include' }),
-        fetch('/api/admin/demographics', { credentials: 'include' })
+        fetch(apiUrl('/api/admin/stats'), { credentials: 'include' }),
+        fetch(apiUrl('/api/admin/visitors?limit=100'), { credentials: 'include' }),
+        fetch(apiUrl('/api/admin/registrations?limit=100'), { credentials: 'include' }),
+        fetch(apiUrl('/api/admin/demographics'), { credentials: 'include' })
       ]);
 
       if (!statsRes.ok || !visitorsRes.ok || !registrationsRes.ok || !demographicsRes.ok) {
@@ -188,7 +189,7 @@ function AdminDashboard() {
 
   const loadVideo = async () => {
     try {
-      const response = await fetch('/api/admin/video', { credentials: 'include' });
+      const response = await fetch(apiUrl('/api/admin/video'), { credentials: 'include' });
       const data = await response.json();
       
       if (data.video) {
@@ -212,7 +213,7 @@ function AdminDashboard() {
     setVideoMessage('');
 
     try {
-      const response = await fetch('/api/admin/video', {
+      const response = await fetch(apiUrl('/api/admin/video'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -248,7 +249,7 @@ function AdminDashboard() {
     }
 
     try {
-      await fetch(`/api/admin/video/${currentVideo.id}`, {
+      await fetch(apiUrl(`/api/admin/video/${currentVideo.id}`), {
         method: 'DELETE',
         credentials: 'include'
       });
@@ -267,7 +268,7 @@ function AdminDashboard() {
 
   const viewVisitorDetails = async (visitorId: string) => {
     try {
-      const response = await fetch(`/api/admin/visitor/${visitorId}`, {
+      const response = await fetch(apiUrl(`/api/admin/visitor/${visitorId}`), {
         credentials: 'include'
       });
       const data = await response.json();
@@ -278,7 +279,7 @@ function AdminDashboard() {
   };
 
   const handleLogout = async () => {
-    await fetch('/api/admin/logout', {
+    await fetch(apiUrl('/api/admin/logout'), {
       method: 'POST',
       credentials: 'include'
     });
@@ -486,7 +487,7 @@ function AdminDashboard() {
 
   const handleExportToWord = async () => {
     try {
-      const response = await fetch('/api/admin/export/word', {
+      const response = await fetch(apiUrl('/api/admin/export/word'), {
         credentials: 'include'
       });
 
@@ -535,7 +536,7 @@ function AdminDashboard() {
     formData.append('file', file);
 
     try {
-      const response = await fetch('/api/admin/import/word', {
+      const response = await fetch(apiUrl('/api/admin/import/word'), {
         method: 'POST',
         credentials: 'include',
         body: formData
