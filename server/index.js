@@ -153,12 +153,15 @@ app.post('/api/admin/login', async (req, res) => {
 
     const token = jwt.sign({ username: admin.username, id: admin.id }, JWT_SECRET, { expiresIn: '7d' });
 
-    res.cookie('adminToken', token, {
+    // Configuração de cookie que funciona em produção cross-origin (Vercel → Replit)
+    const cookieOptions = {
       httpOnly: true,
-      secure: false,
-      sameSite: 'lax',
+      secure: isProduction, // true em produção (HTTPS)
+      sameSite: isProduction ? 'none' : 'lax', // 'none' necessário para cross-origin em produção
       maxAge: 7 * 24 * 60 * 60 * 1000
-    });
+    };
+
+    res.cookie('adminToken', token, cookieOptions);
 
     res.json({ 
       success: true, 

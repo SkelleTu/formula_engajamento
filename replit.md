@@ -27,7 +27,13 @@ Fixed critical issue where the admin panel couldn't connect to the backend when 
 - **Development (Replit)**: Leave `VITE_API_BASE_URL` empty → uses Vite proxy (localhost:3001)
 - **Production (Vercel)**: Set `VITE_API_BASE_URL=https://your-backend.com` → all API calls go to the backend URL
 
-**Deployment Guide**: See `INSTRUCOES_DEPLOY_VERCEL.md` for complete step-by-step instructions.
+**Deployment Guide**: See `GUIA_DEPLOY_COMPLETO.md` for complete step-by-step instructions on deploying backend to Replit and frontend to Vercel.
+
+**Deployment Architecture:**
+- **Backend (Replit)**: Published as Reserved VM, runs Node.js server 24/7 with SQLite database
+- **Frontend (Vercel)**: Static build deployed to Vercel CDN, connects to Replit backend via HTTPS
+- **Configuration**: Use `VITE_API_BASE_URL` in Vercel pointing to Replit URL, and `ALLOWED_ORIGINS` in Replit pointing to Vercel URL
+- **Cookie Settings**: Automatically configured for cross-origin (sameSite: 'none', secure: true in production)
 
 ### Analytics System - Critical Bug Fixes
 **Date**: November 13, 2025
