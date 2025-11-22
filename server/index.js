@@ -109,6 +109,54 @@ app.use(cookieParser());
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 
+// ============================================
+// MIDDLEWARE DE LOGGING DETALHADO PARA DEBUG
+// ============================================
+app.use('/api/admin', (req, res, next) => {
+  const timestamp = new Date().toISOString();
+  const origin = req.headers.origin || 'NO-ORIGIN';
+  const host = req.headers.host;
+  const cookies = req.cookies;
+  const method = req.method;
+  const path = req.path;
+  
+  console.log('═══════════════════════════════════════════════════════════');
+  console.log(`🔍 [${timestamp}] REQUISIÇÃO ADMIN RECEBIDA`);
+  console.log('───────────────────────────────────────────────────────────');
+  console.log('📍 Método:', method);
+  console.log('📍 Path:', path);
+  console.log('📍 Host:', host);
+  console.log('📍 Origin:', origin);
+  console.log('📍 User-Agent:', req.headers['user-agent']);
+  console.log('───────────────────────────────────────────────────────────');
+  console.log('🍪 Cookies Recebidos:', Object.keys(cookies).length > 0 ? cookies : 'NENHUM COOKIE');
+  console.log('───────────────────────────────────────────────────────────');
+  console.log('🔒 Headers de Autenticação:');
+  console.log('  - Authorization:', req.headers.authorization || 'não enviado');
+  console.log('  - Cookie (raw):', req.headers.cookie || 'não enviado');
+  console.log('───────────────────────────────────────────────────────────');
+  
+  // Verificar CORS
+  console.log('🌐 Verificação CORS:');
+  console.log('  - Ambiente:', isProduction ? 'PRODUCTION' : 'DEVELOPMENT');
+  console.log('  - Origens Permitidas:', allowedOrigins.join(', '));
+  console.log('  - Origin da Requisição:', origin);
+  
+  if (isProduction) {
+    if (allowedOrigins.includes(origin)) {
+      console.log('  - Status: ✅ ORIGIN PERMITIDA');
+    } else {
+      console.log('  - Status: ❌ ORIGIN BLOQUEADA (CORS)');
+    }
+  } else {
+    console.log('  - Status: ✅ DESENVOLVIMENTO - TODAS AS ORIGENS PERMITIDAS');
+  }
+  
+  console.log('═══════════════════════════════════════════════════════════');
+  
+  next();
+});
+
 // Helper: Verificar DNT (bloquear apenas se explicitamente ativado)
 const isDNTEnabled = (req) => {
   const headerDNT = req.headers.dnt || req.headers['dnt'];
@@ -136,22 +184,32 @@ const authMiddleware = async (req, res, next) => {
 
 // Rota de login admin
 app.post('/api/admin/login', async (req, res) => {
+  const requestId = Date.now();
+  console.log(`\n🔐 [LOGIN-${requestId}] ============ INICIANDO PROCESSO DE LOGIN ============`);
+  
   try {
     const { username, password } = req.body;
+    console.log(`🔐 [LOGIN-${requestId}] Username recebido:`, username);
+    console.log(`🔐 [LOGIN-${requestId}] Password recebido:`, password ? '***REDACTED***' : 'VAZIO');
 
     const admin = db.prepare('SELECT * FROM admins WHERE username = ?').get(username);
     
     if (!admin) {
+      console.log(`🔐 [LOGIN-${requestId}] ❌ FALHA: Admin não encontrado`);
       return res.status(401).json({ error: 'Credenciais inválidas' });
     }
+    console.log(`🔐 [LOGIN-${requestId}] ✅ Admin encontrado no banco:`, admin.username);
 
     const validPassword = await bcrypt.compare(password, admin.password_hash);
 
     if (!validPassword) {
+      console.log(`🔐 [LOGIN-${requestId}] ❌ FALHA: Senha incorreta`);
       return res.status(401).json({ error: 'Credenciais inválidas' });
     }
+    console.log(`🔐 [LOGIN-${requestId}] ✅ Senha validada com sucesso`);
 
     const token = jwt.sign({ username: admin.username, id: admin.id }, JWT_SECRET, { expiresIn: '7d' });
+    console.log(`🔐 [LOGIN-${requestId}] ✅ Token JWT gerado`);
 
     // Configuração de cookie que funciona em produção cross-origin (Vercel → Replit)
     const cookieOptions = {
@@ -161,15 +219,29 @@ app.post('/api/admin/login', async (req, res) => {
       maxAge: 7 * 24 * 60 * 60 * 1000
     };
 
-    res.cookie('adminToken', token, cookieOptions);
+    console.log(`🔐 [LOGIN-${requestId}] 🍪 Configuração do Cookie:`);
+    console.log(`🔐 [LOGIN-${requestId}]   - httpOnly:`, cookieOptions.httpOnly);
+    console.log(`🔐 [LOGIN-${requestId}]   - secure:`, cookieOptions.secure);
+    console.log(`🔐 [LOGIN-${requestId}]   - sameSite:`, cookieOptions.sameSite);
+    console.log(`🔐 [LOGIN-${requestId}]   - maxAge:`, cookieOptions.maxAge);
 
-    res.json({ 
+    res.cookie('adminToken', token, cookieOptions);
+    console.log(`🔐 [LOGIN-${requestId}] ✅ Cookie definido na resposta`);
+
+    const response = { 
       success: true, 
       username: admin.username,
       requiresPasswordChange: admin.requires_password_change === 1
-    });
+    };
+
+    console.log(`🔐 [LOGIN-${requestId}] 📤 Enviando resposta de sucesso:`, response);
+    console.log(`🔐 [LOGIN-${requestId}] ============ LOGIN CONCLUÍDO COM SUCESSO ============\n`);
+
+    res.json(response);
   } catch (error) {
-    console.error('Erro no login:', error);
+    console.log(`🔐 [LOGIN-${requestId}] 💥 ERRO CRÍTICO NO LOGIN:`);
+    console.error(error);
+    console.log(`🔐 [LOGIN-${requestId}] ============ LOGIN FALHOU COM ERRO ============\n`);
     res.status(500).json({ error: 'Erro no servidor' });
   }
 });

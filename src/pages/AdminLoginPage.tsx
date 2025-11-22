@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import FloatingIcons from '../components/FloatingIcons';
 import BackButton from '../components/BackButton';
 import { apiUrl } from '../config/api';
+import { HttpLogger } from '../utils/httpLogger';
 
 export default function AdminLoginPage() {
   const [username, setUsername] = useState('');
@@ -20,8 +21,10 @@ export default function AdminLoginPage() {
     setError('');
     setLoading(true);
 
+    console.log('%c🚀 INICIANDO LOGIN', 'background: #4f46e5; color: white; padding: 4px 8px; border-radius: 4px; font-weight: bold');
+
     try {
-      const response = await fetch(apiUrl('/api/admin/login'), {
+      const response = await HttpLogger.loggedFetch(apiUrl('/api/admin/login'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -33,6 +36,8 @@ export default function AdminLoginPage() {
       const data = await response.json();
 
       if (!response.ok) {
+        console.log('%c❌ LOGIN FALHOU', 'background: #dc2626; color: white; padding: 4px 8px; border-radius: 4px; font-weight: bold');
+        console.log('Erro retornado:', data.error);
         setError(data.error || 'Erro ao fazer login');
         setLoading(false);
         return;
@@ -40,15 +45,20 @@ export default function AdminLoginPage() {
 
       // Verificar se precisa trocar senha
       if (data.requiresPasswordChange) {
+        console.log('%c⚠️ REQUER TROCA DE SENHA', 'background: #f59e0b; color: white; padding: 4px 8px; border-radius: 4px; font-weight: bold');
         setShowPasswordChange(true);
         setLoading(false);
         return;
       }
 
       // Login bem-sucedido
+      console.log('%c✅ LOGIN BEM-SUCEDIDO', 'background: #16a34a; color: white; padding: 4px 8px; border-radius: 4px; font-weight: bold');
+      console.log('Redirecionando para dashboard...');
       navigate('/admin/dashboard');
-    } catch (err) {
-      setError('Erro ao conectar com o servidor');
+    } catch (err: any) {
+      console.log('%c💥 ERRO CRÍTICO NO LOGIN', 'background: #991b1b; color: white; padding: 4px 8px; border-radius: 4px; font-weight: bold');
+      console.error('Detalhes do erro:', err);
+      setError('Erro ao conectar com o servidor: ' + err.message);
       setLoading(false);
     }
   };
@@ -70,7 +80,7 @@ export default function AdminLoginPage() {
     setLoading(true);
 
     try {
-      const response = await fetch(apiUrl('/api/admin/change-password'), {
+      const response = await HttpLogger.loggedFetch(apiUrl('/api/admin/change-password'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -92,8 +102,8 @@ export default function AdminLoginPage() {
 
       // Senha trocada com sucesso - navegar para dashboard
       navigate('/admin/dashboard');
-    } catch (err) {
-      setChangePasswordError('Erro ao conectar com o servidor');
+    } catch (err: any) {
+      setChangePasswordError('Erro ao conectar com o servidor: ' + err.message);
       setLoading(false);
     }
   };
