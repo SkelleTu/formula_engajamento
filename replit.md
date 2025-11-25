@@ -5,6 +5,37 @@ Funil is a video-based landing page application designed to capture leads throug
 
 ## Recent Changes (November 2025)
 
+### Sistema de Captura e Exibição de Erros Detalhados
+**Date**: November 25, 2025
+**Status**: ✅ Implemented and Tested
+
+Implemented comprehensive error capture and display system for debugging production issues.
+
+**Changes Made:**
+1. ✅ Created `ErrorToast` component - Visual error display with full technical details
+2. ✅ Created `ErrorContext` - Global error management context
+3. ✅ Created `ErrorHandler` utility - Advanced error capture and processing
+4. ✅ Integrated into `AdminLoginPage` - Automatic error capture on login/password change
+5. ✅ Added comprehensive documentation in `SISTEMA_CAPTURA_ERROS.md`
+
+**Features:**
+- Automatic capture of HTTP errors with full request/response details
+- Stack traces, headers, and body logging
+- Detection of CORS, Network, and Redirect errors
+- Intelligent error analysis with suggested solutions
+- Copy-to-clipboard functionality for easy error sharing
+- Visual toast notification with expandable technical details
+
+**How It Works:**
+- Uses `ErrorHandler.enhancedFetch()` instead of regular `fetch()` 
+- Automatically captures all error details (status, headers, body, stack)
+- Displays in floating toast with all technical information
+- User can copy complete error report to share with developer
+
+**Documentation**: See `SISTEMA_CAPTURA_ERROS.md` for complete usage guide.
+
+## Recent Changes (November 2025)
+
 ### Vercel Deployment Fix - API Connection Configuration
 **Date**: November 22, 2025
 **Status**: ✅ Implemented and Documented
