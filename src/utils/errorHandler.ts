@@ -135,11 +135,28 @@ export class ErrorHandler {
     options: RequestInit = {},
     location: string
   ): Promise<Response> {
+    // Preparar body para logging - só parsear se soubermos que é JSON
+    let parsedBodyForLogging;
+    if (options.body) {
+      const contentType = (options.headers as Record<string, string>)?.['Content-Type'] || 
+                         (options.headers as Record<string, string>)?.['content-type'];
+      
+      if (contentType?.includes('application/json') && typeof options.body === 'string') {
+        try {
+          parsedBodyForLogging = JSON.parse(options.body);
+        } catch {
+          parsedBodyForLogging = options.body;
+        }
+      } else {
+        parsedBodyForLogging = options.body;
+      }
+    }
+
     const requestInfo = {
       url,
       method: options.method || 'GET',
       headers: options.headers as Record<string, string>,
-      body: options.body ? JSON.parse(options.body as string) : undefined,
+      body: parsedBodyForLogging,
     };
 
     console.log(`%c🌐 REQUISIÇÃO: ${requestInfo.method} ${url}`, 'color: #3b82f6; font-weight: bold');
@@ -156,29 +173,32 @@ export class ErrorHandler {
       );
 
       if (!response.ok) {
+        // Clonar a resposta ANTES de consumir para não estragar o original
+        const clonedResponse = response.clone();
         const errorDetails = await ErrorHandler.handleFetchError(
           new Error(`HTTP ${response.status}: ${response.statusText}`),
           location,
           requestInfo,
-          response
+          clonedResponse
         );
-        throw { errorDetails, response };
+        // Não jogar a resposta original - apenas errorDetails
+        throw { errorDetails };
       }
 
       return response;
     } catch (error: any) {
-      // Se já temos errorDetails, re-throw
+      // Se já temos errorDetails, re-throw como está
       if (error.errorDetails) {
         throw error;
       }
 
-      // Criar errorDetails para outros tipos de erro
+      // Criar errorDetails para outros tipos de erro (network, etc)
       const errorDetails = await ErrorHandler.handleFetchError(
         error,
         location,
         requestInfo
       );
-      throw { errorDetails, originalError: error };
+      throw { errorDetails };
     }
   }
 }

@@ -60,26 +60,27 @@ export default function AdminLoginPage() {
       console.log('%c💥 ERRO CRÍTICO NO LOGIN', 'background: #991b1b; color: white; padding: 4px 8px; border-radius: 4px; font-weight: bold');
       console.error('Detalhes completos do erro:', err);
       
+      // SEMPRE resetar loading primeiro
+      setLoading(false);
+      
       // Mostrar erro detalhado no toast
       if (err.errorDetails) {
         showError(err.errorDetails);
+        setError('Erro ao fazer login. Veja os detalhes no balão de erro.');
       } else {
         // Fallback para erros não capturados
         const errorDetails = ErrorHandler.createErrorDetails(
           err.message || 'Erro desconhecido ao fazer login',
           'AdminLoginPage.handleSubmit - Catch Block',
           {
-            statusCode: err.response?.status,
             url: requestUrl,
             method: 'POST',
             requestBody,
           }
         );
         showError(errorDetails);
+        setError('Erro ao fazer login. Veja os detalhes no balão de erro.');
       }
-      
-      setError('Erro ao fazer login. Veja os detalhes no balão de erro.');
-      setLoading(false);
     }
   };
 
@@ -126,24 +127,25 @@ export default function AdminLoginPage() {
       console.log('%c💥 ERRO AO TROCAR SENHA', 'background: #991b1b; color: white; padding: 4px 8px; border-radius: 4px; font-weight: bold');
       console.error('Detalhes completos do erro:', err);
       
+      // SEMPRE resetar loading primeiro
+      setLoading(false);
+      
       // Mostrar erro detalhado no toast
       if (err.errorDetails) {
         showError(err.errorDetails);
+        setChangePasswordError('Erro ao trocar senha. Veja os detalhes no balão de erro.');
       } else {
         const errorDetails = ErrorHandler.createErrorDetails(
           err.message || 'Erro desconhecido ao trocar senha',
           'AdminLoginPage.handlePasswordChange - Catch Block',
           {
-            statusCode: err.response?.status,
             url: requestUrl,
             method: 'POST',
           }
         );
         showError(errorDetails);
+        setChangePasswordError('Erro ao trocar senha. Veja os detalhes no balão de erro.');
       }
-      
-      setChangePasswordError('Erro ao trocar senha. Veja os detalhes no balão de erro.');
-      setLoading(false);
     }
   };
 
