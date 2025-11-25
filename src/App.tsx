@@ -8,6 +8,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import { analytics } from './utils/analytics';
 import { inject } from '@vercel/analytics';
 import { initGA, trackPageView } from './utils/googleAnalytics';
+import { ErrorProvider } from './contexts/ErrorContext';
 
 function MainApp() {
   const [currentPage, setCurrentPage] = useState<'landing' | 'registration' | 'confirmation'>('landing');
@@ -92,9 +93,11 @@ function App() {
   }, []);
 
   return (
-    <BrowserRouter>
-      <RouterWithTracking />
-    </BrowserRouter>
+    <ErrorProvider>
+      <BrowserRouter>
+        <RouterWithTracking />
+      </BrowserRouter>
+    </ErrorProvider>
   );
 }
 

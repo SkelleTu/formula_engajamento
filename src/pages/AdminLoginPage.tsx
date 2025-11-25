@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import FloatingIcons from '../components/FloatingIcons';
 import BackButton from '../components/BackButton';
 import { apiUrl } from '../config/api';
-import { HttpLogger } from '../utils/httpLogger';
+import { useError } from '../contexts/ErrorContext';
+import { ErrorHandler } from '../utils/errorHandler';
 
 export default function AdminLoginPage() {
   const [username, setUsername] = useState('');
@@ -15,6 +16,7 @@ export default function AdminLoginPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [changePasswordError, setChangePasswordError] = useState('');
   const navigate = useNavigate();
+  const { showError } = useError();
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -23,25 +25,24 @@ export default function AdminLoginPage() {
 
     console.log('%c🚀 INICIANDO LOGIN', 'background: #4f46e5; color: white; padding: 4px 8px; border-radius: 4px; font-weight: bold');
 
+    const requestUrl = apiUrl('/api/admin/login');
+    const requestBody = { username, password };
+
     try {
-      const response = await HttpLogger.loggedFetch(apiUrl('/api/admin/login'), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
+      const response = await ErrorHandler.enhancedFetch(
+        requestUrl,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include',
+          body: JSON.stringify(requestBody)
         },
-        credentials: 'include',
-        body: JSON.stringify({ username, password })
-      });
+        'AdminLoginPage.handleSubmit'
+      );
 
       const data = await response.json();
-
-      if (!response.ok) {
-        console.log('%c❌ LOGIN FALHOU', 'background: #dc2626; color: white; padding: 4px 8px; border-radius: 4px; font-weight: bold');
-        console.log('Erro retornado:', data.error);
-        setError(data.error || 'Erro ao fazer login');
-        setLoading(false);
-        return;
-      }
 
       // Verificar se precisa trocar senha
       if (data.requiresPasswordChange) {
@@ -57,8 +58,27 @@ export default function AdminLoginPage() {
       navigate('/admin/dashboard');
     } catch (err: any) {
       console.log('%c💥 ERRO CRÍTICO NO LOGIN', 'background: #991b1b; color: white; padding: 4px 8px; border-radius: 4px; font-weight: bold');
-      console.error('Detalhes do erro:', err);
-      setError('Erro ao conectar com o servidor: ' + err.message);
+      console.error('Detalhes completos do erro:', err);
+      
+      // Mostrar erro detalhado no toast
+      if (err.errorDetails) {
+        showError(err.errorDetails);
+      } else {
+        // Fallback para erros não capturados
+        const errorDetails = ErrorHandler.createErrorDetails(
+          err.message || 'Erro desconhecido ao fazer login',
+          'AdminLoginPage.handleSubmit - Catch Block',
+          {
+            statusCode: err.response?.status,
+            url: requestUrl,
+            method: 'POST',
+            requestBody,
+          }
+        );
+        showError(errorDetails);
+      }
+      
+      setError('Erro ao fazer login. Veja os detalhes no balão de erro.');
       setLoading(false);
     }
   };
@@ -79,31 +99,50 @@ export default function AdminLoginPage() {
 
     setLoading(true);
 
+    const requestUrl = apiUrl('/api/admin/change-password');
+    const requestBody = {
+      currentPassword: password,
+      newPassword: newPassword
+    };
+
     try {
-      const response = await HttpLogger.loggedFetch(apiUrl('/api/admin/change-password'), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
+      await ErrorHandler.enhancedFetch(
+        requestUrl,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include',
+          body: JSON.stringify(requestBody)
         },
-        credentials: 'include',
-        body: JSON.stringify({
-          currentPassword: password,
-          newPassword: newPassword
-        })
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        setChangePasswordError(data.error || 'Erro ao trocar senha');
-        setLoading(false);
-        return;
-      }
+        'AdminLoginPage.handlePasswordChange'
+      );
 
       // Senha trocada com sucesso - navegar para dashboard
+      console.log('%c✅ SENHA ALTERADA COM SUCESSO', 'background: #16a34a; color: white; padding: 4px 8px; border-radius: 4px; font-weight: bold');
       navigate('/admin/dashboard');
     } catch (err: any) {
-      setChangePasswordError('Erro ao conectar com o servidor: ' + err.message);
+      console.log('%c💥 ERRO AO TROCAR SENHA', 'background: #991b1b; color: white; padding: 4px 8px; border-radius: 4px; font-weight: bold');
+      console.error('Detalhes completos do erro:', err);
+      
+      // Mostrar erro detalhado no toast
+      if (err.errorDetails) {
+        showError(err.errorDetails);
+      } else {
+        const errorDetails = ErrorHandler.createErrorDetails(
+          err.message || 'Erro desconhecido ao trocar senha',
+          'AdminLoginPage.handlePasswordChange - Catch Block',
+          {
+            statusCode: err.response?.status,
+            url: requestUrl,
+            method: 'POST',
+          }
+        );
+        showError(errorDetails);
+      }
+      
+      setChangePasswordError('Erro ao trocar senha. Veja os detalhes no balão de erro.');
       setLoading(false);
     }
   };
