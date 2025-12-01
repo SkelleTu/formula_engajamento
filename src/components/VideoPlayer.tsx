@@ -215,8 +215,8 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
             className="absolute top-0 left-0 right-0 z-50 pointer-events-none transition-opacity duration-700"
             style={{
               width: '100%',
-              height: '80px',
-              background: 'linear-gradient(to bottom, rgb(2, 2, 15) 0%, rgb(2, 2, 15) 60%, rgba(2, 2, 15, 0.7) 80%, transparent 100%)',
+              height: '120px',
+              background: 'linear-gradient(to bottom, rgb(2, 2, 15) 0%, rgb(2, 2, 15) 70%, rgba(2, 2, 15, 0.5) 85%, transparent 100%)',
               opacity: showOverlay ? 1 : 0,
             }}
           ></div>
