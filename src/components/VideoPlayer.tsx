@@ -21,7 +21,7 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
   const [videoConfig, setVideoConfig] = useState<VideoConfig | null>(null);
   const [buttonEnabled, setButtonEnabled] = useState(false);
   const [showHudOverlay, setShowHudOverlay] = useState(true);
-  const [showClickOverlay, setShowClickOverlay] = useState(true);
+  const [isVideoStarted, setIsVideoStarted] = useState(false);
   const videoContainerRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<any>(null);
   const progressIntervalRef = useRef<any>(null);
@@ -29,6 +29,8 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
   const trackingStartedRef = useRef<boolean>(false);
   const hudOverlayTimeoutRef = useRef<any>(null);
   const currentVideoIdRef = useRef<string>('');
+  const hasTriedAutoplayRef = useRef<boolean>(false);
+  const documentClickListenerRef = useRef<any>(null);
 
   const getSavedProgress = (videoId: string): number => {
     try {
@@ -53,6 +55,42 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
     } catch (e) {}
   };
 
+  const triggerPlay = () => {
+    if (playerRef.current && playerRef.current.playVideo && !isVideoStarted) {
+      playerRef.current.playVideo();
+      
+      setTimeout(() => {
+        if (playerRef.current) {
+          if (playerRef.current.unMute) playerRef.current.unMute();
+          if (playerRef.current.setVolume) playerRef.current.setVolume(100);
+        }
+      }, 100);
+    }
+  };
+
+  const setupDocumentClickListener = () => {
+    if (documentClickListenerRef.current) return;
+    
+    const handleAnyInteraction = () => {
+      triggerPlay();
+      
+      if (documentClickListenerRef.current) {
+        document.removeEventListener('click', documentClickListenerRef.current, true);
+        document.removeEventListener('touchstart', documentClickListenerRef.current, true);
+        document.removeEventListener('keydown', documentClickListenerRef.current, true);
+        document.removeEventListener('scroll', documentClickListenerRef.current, true);
+        documentClickListenerRef.current = null;
+      }
+    };
+    
+    documentClickListenerRef.current = handleAnyInteraction;
+    
+    document.addEventListener('click', handleAnyInteraction, true);
+    document.addEventListener('touchstart', handleAnyInteraction, true);
+    document.addEventListener('keydown', handleAnyInteraction, true);
+    document.addEventListener('scroll', handleAnyInteraction, true);
+  };
+
   useEffect(() => {
     loadVideoConfig();
     
@@ -62,6 +100,12 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
       }
       if (saveProgressIntervalRef.current) {
         clearInterval(saveProgressIntervalRef.current);
+      }
+      if (documentClickListenerRef.current) {
+        document.removeEventListener('click', documentClickListenerRef.current, true);
+        document.removeEventListener('touchstart', documentClickListenerRef.current, true);
+        document.removeEventListener('keydown', documentClickListenerRef.current, true);
+        document.removeEventListener('scroll', documentClickListenerRef.current, true);
       }
     };
   }, []);
@@ -145,8 +189,8 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
       width: '100%',
       height: '100%',
       playerVars: {
-        autoplay: 0,
-        mute: 0,
+        autoplay: 1,
+        mute: 1,
         controls: 0,
         disablekb: 1,
         fs: 0,
@@ -167,15 +211,51 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
         start: Math.floor(savedTime),
       },
       events: {
-        onReady: () => {
+        onReady: (event: any) => {
+          const player = event.target;
+          
           const iframe = document.querySelector('#youtube-player iframe') as HTMLIFrameElement;
           if (iframe) {
             iframe.style.pointerEvents = 'none';
           }
+          
+          player.playVideo();
+          
+          setTimeout(() => {
+            if (!hasTriedAutoplayRef.current) {
+              hasTriedAutoplayRef.current = true;
+              
+              const state = player.getPlayerState ? player.getPlayerState() : -1;
+              
+              if (state !== 1) {
+                setupDocumentClickListener();
+              } else {
+                setTimeout(() => {
+                  if (player.unMute) player.unMute();
+                  if (player.setVolume) player.setVolume(100);
+                }, 500);
+              }
+            }
+          }, 1000);
         },
         onStateChange: (event: any) => {
           if (event.data === window.YT.PlayerState.PLAYING) {
-            setShowClickOverlay(false);
+            setIsVideoStarted(true);
+            
+            if (documentClickListenerRef.current) {
+              document.removeEventListener('click', documentClickListenerRef.current, true);
+              document.removeEventListener('touchstart', documentClickListenerRef.current, true);
+              document.removeEventListener('keydown', documentClickListenerRef.current, true);
+              document.removeEventListener('scroll', documentClickListenerRef.current, true);
+              documentClickListenerRef.current = null;
+            }
+            
+            setTimeout(() => {
+              if (playerRef.current) {
+                if (playerRef.current.unMute) playerRef.current.unMute();
+                if (playerRef.current.setVolume) playerRef.current.setVolume(100);
+              }
+            }, 300);
             
             hudOverlayTimeoutRef.current = setTimeout(() => {
               setShowHudOverlay(false);
@@ -205,21 +285,6 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
         }
       }
     });
-  };
-
-  const handleClickToPlay = () => {
-    if (playerRef.current && playerRef.current.playVideo) {
-      playerRef.current.playVideo();
-      
-      setTimeout(() => {
-        if (playerRef.current && playerRef.current.unMute) {
-          playerRef.current.unMute();
-        }
-        if (playerRef.current && playerRef.current.setVolume) {
-          playerRef.current.setVolume(100);
-        }
-      }, 500);
-    }
   };
 
   const startSavingProgress = () => {
@@ -289,31 +354,13 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
             <div id="youtube-player" className="w-full h-full"></div>
           </div>
           
-          {showClickOverlay && (
-            <div 
-              className="absolute inset-0 z-40 cursor-pointer flex items-center justify-center bg-black/60 transition-opacity duration-300"
-              onClick={handleClickToPlay}
-            >
-              <div className="flex flex-col items-center gap-4">
-                <div className="w-20 h-20 rounded-full bg-pink-500/80 flex items-center justify-center hover:bg-pink-500 transition-colors">
-                  <svg className="w-10 h-10 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M8 5v14l11-7z"/>
-                  </svg>
-                </div>
-                <span className="text-white text-lg font-medium">Clique para assistir</span>
-              </div>
-            </div>
-          )}
-          
-          {!showClickOverlay && (
-            <div 
-              className="absolute inset-0 z-30 cursor-default"
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={(e) => e.preventDefault()}
-              onDoubleClick={(e) => e.preventDefault()}
-              onContextMenu={(e) => e.preventDefault()}
-            ></div>
-          )}
+          <div 
+            className="absolute inset-0 z-30 cursor-default"
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={(e) => e.preventDefault()}
+            onDoubleClick={(e) => e.preventDefault()}
+            onContextMenu={(e) => e.preventDefault()}
+          ></div>
           
           <div 
             className="absolute top-0 left-0 right-0 z-50 pointer-events-none transition-opacity duration-700"
