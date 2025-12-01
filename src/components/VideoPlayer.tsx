@@ -13,7 +13,7 @@ interface VideoConfig {
 }
 
 const DEFAULT_VIDEO_URL = 'https://youtu.be/WAUqBZuNmlA';
-const DEFAULT_BUTTON_DELAY = 30;
+const DEFAULT_BUTTON_DELAY = 180;
 
 function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
   const [videoConfig, setVideoConfig] = useState<VideoConfig | null>(null);
