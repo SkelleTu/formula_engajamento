@@ -15,26 +15,53 @@ interface VideoConfig {
 const DEFAULT_VIDEO_URL = 'https://youtu.be/WAUqBZuNmlA';
 const DEFAULT_BUTTON_DELAY = 180;
 
+const STORAGE_KEY = 'video_progress';
+
 function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
   const [videoConfig, setVideoConfig] = useState<VideoConfig | null>(null);
   const [buttonEnabled, setButtonEnabled] = useState(false);
-  const [showOverlay, setShowOverlay] = useState(true);
+  const [showHudOverlay, setShowHudOverlay] = useState(true);
+  const [showClickOverlay, setShowClickOverlay] = useState(true);
   const videoContainerRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<any>(null);
   const progressIntervalRef = useRef<any>(null);
+  const saveProgressIntervalRef = useRef<any>(null);
   const trackingStartedRef = useRef<boolean>(false);
-  const overlayTimeoutRef = useRef<any>(null);
+  const hudOverlayTimeoutRef = useRef<any>(null);
+  const currentVideoIdRef = useRef<string>('');
+
+  const getSavedProgress = (videoId: string): number => {
+    try {
+      const saved = localStorage.getItem(`${STORAGE_KEY}_${videoId}`);
+      if (saved) {
+        const data = JSON.parse(saved);
+        return data.time || 0;
+      }
+    } catch (e) {}
+    return 0;
+  };
+
+  const saveProgress = (videoId: string, time: number) => {
+    try {
+      localStorage.setItem(`${STORAGE_KEY}_${videoId}`, JSON.stringify({ time, timestamp: Date.now() }));
+    } catch (e) {}
+  };
+
+  const clearProgress = (videoId: string) => {
+    try {
+      localStorage.removeItem(`${STORAGE_KEY}_${videoId}`);
+    } catch (e) {}
+  };
 
   useEffect(() => {
     loadVideoConfig();
     
-    overlayTimeoutRef.current = setTimeout(() => {
-      setShowOverlay(false);
-    }, 5000);
-    
     return () => {
-      if (overlayTimeoutRef.current) {
-        clearTimeout(overlayTimeoutRef.current);
+      if (hudOverlayTimeoutRef.current) {
+        clearTimeout(hudOverlayTimeoutRef.current);
+      }
+      if (saveProgressIntervalRef.current) {
+        clearInterval(saveProgressIntervalRef.current);
       }
     };
   }, []);
@@ -43,10 +70,25 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
     if (videoConfig) {
       const videoId = getYouTubeVideoId(videoConfig.video_url);
       if (videoId) {
+        currentVideoIdRef.current = videoId;
         loadYouTubePlayer(videoId);
       }
     }
   }, [videoConfig]);
+
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (playerRef.current && playerRef.current.getCurrentTime && currentVideoIdRef.current) {
+        const time = playerRef.current.getCurrentTime();
+        if (time > 0) {
+          saveProgress(currentVideoIdRef.current, time);
+        }
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, []);
 
   const loadVideoConfig = async () => {
     try {
@@ -96,13 +138,15 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
   };
 
   const createYouTubePlayer = (videoId: string) => {
+    const savedTime = getSavedProgress(videoId);
+    
     playerRef.current = new window.YT.Player('youtube-player', {
       videoId: videoId,
       width: '100%',
       height: '100%',
       playerVars: {
-        autoplay: 1,
-        mute: 1,
+        autoplay: 0,
+        mute: 0,
         controls: 0,
         disablekb: 1,
         fs: 0,
@@ -120,58 +164,37 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
         loop: 1,
         playlist: videoId,
         vq: 'hd1080',
+        start: Math.floor(savedTime),
       },
       events: {
-        onReady: (event: any) => {
-          const player = event.target;
-          
-          if (player.setPlaybackQuality) {
-            try {
-              player.setPlaybackQuality('hd1080');
-            } catch (e) {}
-          }
-          
-          player.playVideo();
-          
-          setTimeout(() => {
-            if (player.unMute) player.unMute();
-            if (player.setVolume) player.setVolume(100);
-          }, 1000);
-          
+        onReady: () => {
           const iframe = document.querySelector('#youtube-player iframe') as HTMLIFrameElement;
           if (iframe) {
             iframe.style.pointerEvents = 'none';
           }
-          
-          setTimeout(() => {
-            trackVideoProgress();
-          }, 500);
-          
-          const retryPlay = setInterval(() => {
-            if (player.getPlayerState && player.getPlayerState() !== 1) {
-              player.playVideo();
-            } else {
-              clearInterval(retryPlay);
-            }
-          }, 1000);
-          
-          setTimeout(() => clearInterval(retryPlay), 10000);
         },
         onStateChange: (event: any) => {
-          const player = event.target;
-          
           if (event.data === window.YT.PlayerState.PLAYING) {
-            if (player.unMute) player.unMute();
-            if (player.setVolume) player.setVolume(100);
+            setShowClickOverlay(false);
+            
+            hudOverlayTimeoutRef.current = setTimeout(() => {
+              setShowHudOverlay(false);
+            }, 5000);
+            
             trackVideoProgress();
+            startSavingProgress();
           }
           if (event.data === window.YT.PlayerState.ENDED) {
+            clearProgress(currentVideoIdRef.current);
             if (playerRef.current && playerRef.current.seekTo) {
               playerRef.current.seekTo(0);
               playerRef.current.playVideo();
             }
           }
           if (event.data === window.YT.PlayerState.PAUSED) {
+            if (playerRef.current && playerRef.current.getCurrentTime && currentVideoIdRef.current) {
+              saveProgress(currentVideoIdRef.current, playerRef.current.getCurrentTime());
+            }
             if (playerRef.current && playerRef.current.playVideo) {
               playerRef.current.playVideo();
             }
@@ -182,6 +205,36 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
         }
       }
     });
+  };
+
+  const handleClickToPlay = () => {
+    if (playerRef.current && playerRef.current.playVideo) {
+      playerRef.current.playVideo();
+      
+      setTimeout(() => {
+        if (playerRef.current && playerRef.current.unMute) {
+          playerRef.current.unMute();
+        }
+        if (playerRef.current && playerRef.current.setVolume) {
+          playerRef.current.setVolume(100);
+        }
+      }, 500);
+    }
+  };
+
+  const startSavingProgress = () => {
+    if (saveProgressIntervalRef.current) {
+      clearInterval(saveProgressIntervalRef.current);
+    }
+    
+    saveProgressIntervalRef.current = setInterval(() => {
+      if (playerRef.current && playerRef.current.getCurrentTime && currentVideoIdRef.current) {
+        const time = playerRef.current.getCurrentTime();
+        if (time > 0) {
+          saveProgress(currentVideoIdRef.current, time);
+        }
+      }
+    }, 3000);
   };
 
   const trackVideoProgress = () => {
@@ -211,6 +264,9 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
       if (progressIntervalRef.current) {
         clearInterval(progressIntervalRef.current);
       }
+      if (saveProgressIntervalRef.current) {
+        clearInterval(saveProgressIntervalRef.current);
+      }
     };
   }, []);
 
@@ -233,13 +289,31 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
             <div id="youtube-player" className="w-full h-full"></div>
           </div>
           
-          <div 
-            className="absolute inset-0 z-30 cursor-default"
-            onMouseDown={(e) => e.preventDefault()}
-            onClick={(e) => e.preventDefault()}
-            onDoubleClick={(e) => e.preventDefault()}
-            onContextMenu={(e) => e.preventDefault()}
-          ></div>
+          {showClickOverlay && (
+            <div 
+              className="absolute inset-0 z-40 cursor-pointer flex items-center justify-center bg-black/60 transition-opacity duration-300"
+              onClick={handleClickToPlay}
+            >
+              <div className="flex flex-col items-center gap-4">
+                <div className="w-20 h-20 rounded-full bg-pink-500/80 flex items-center justify-center hover:bg-pink-500 transition-colors">
+                  <svg className="w-10 h-10 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M8 5v14l11-7z"/>
+                  </svg>
+                </div>
+                <span className="text-white text-lg font-medium">Clique para assistir</span>
+              </div>
+            </div>
+          )}
+          
+          {!showClickOverlay && (
+            <div 
+              className="absolute inset-0 z-30 cursor-default"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={(e) => e.preventDefault()}
+              onDoubleClick={(e) => e.preventDefault()}
+              onContextMenu={(e) => e.preventDefault()}
+            ></div>
+          )}
           
           <div 
             className="absolute top-0 left-0 right-0 z-50 pointer-events-none transition-opacity duration-700"
@@ -247,7 +321,7 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
               width: '100%',
               height: '120px',
               background: 'linear-gradient(to bottom, rgb(2, 2, 15) 0%, rgb(2, 2, 15) 70%, rgba(2, 2, 15, 0.5) 85%, transparent 100%)',
-              opacity: showOverlay ? 1 : 0,
+              opacity: showHudOverlay ? 1 : 0,
             }}
           ></div>
           
@@ -256,7 +330,7 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
             style={{
               height: '40px',
               background: 'linear-gradient(to top, rgb(2, 2, 15) 0%, rgb(2, 2, 15) 30%, rgba(2, 2, 15, 0.5) 60%, transparent 100%)',
-              opacity: showOverlay ? 1 : 0,
+              opacity: showHudOverlay ? 1 : 0,
             }}
           ></div>
         </div>
