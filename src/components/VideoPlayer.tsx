@@ -123,12 +123,19 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
       },
       events: {
         onReady: (event: any) => {
-          event.target.setPlaybackQuality('highres');
-          event.target.playVideo();
+          const player = event.target;
+          
+          if (player.setPlaybackQuality) {
+            try {
+              player.setPlaybackQuality('hd1080');
+            } catch (e) {}
+          }
+          
+          player.playVideo();
           
           setTimeout(() => {
-            event.target.unMute();
-            event.target.setVolume(100);
+            if (player.unMute) player.unMute();
+            if (player.setVolume) player.setVolume(100);
           }, 1000);
           
           const iframe = document.querySelector('#youtube-player iframe') as HTMLIFrameElement;
@@ -139,12 +146,23 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
           setTimeout(() => {
             trackVideoProgress();
           }, 500);
+          
+          const retryPlay = setInterval(() => {
+            if (player.getPlayerState && player.getPlayerState() !== 1) {
+              player.playVideo();
+            } else {
+              clearInterval(retryPlay);
+            }
+          }, 1000);
+          
+          setTimeout(() => clearInterval(retryPlay), 10000);
         },
         onStateChange: (event: any) => {
+          const player = event.target;
+          
           if (event.data === window.YT.PlayerState.PLAYING) {
-            event.target.setPlaybackQuality('highres');
-            event.target.unMute();
-            event.target.setVolume(100);
+            if (player.unMute) player.unMute();
+            if (player.setVolume) player.setVolume(100);
             trackVideoProgress();
           }
           if (event.data === window.YT.PlayerState.ENDED) {
@@ -159,11 +177,8 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
             }
           }
         },
-        onPlaybackQualityChange: (event: any) => {
-          const quality = event.data;
-          if (quality !== 'highres' && quality !== 'hd1080' && quality !== 'hd720') {
-            event.target.setPlaybackQuality('highres');
-          }
+        onError: (event: any) => {
+          console.log('YouTube Player Error:', event.data);
         }
       }
     });
