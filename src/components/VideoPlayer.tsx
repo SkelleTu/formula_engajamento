@@ -119,11 +119,12 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
         color: 'white',
         loop: 1,
         playlist: videoId,
+        vq: 'hd1080',
       },
       events: {
         onReady: (event: any) => {
+          event.target.setPlaybackQuality('highres');
           event.target.playVideo();
-          event.target.setPlaybackQuality('hd1080');
           
           const iframe = document.querySelector('#youtube-player iframe') as HTMLIFrameElement;
           if (iframe) {
@@ -136,6 +137,7 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
         },
         onStateChange: (event: any) => {
           if (event.data === window.YT.PlayerState.PLAYING) {
+            event.target.setPlaybackQuality('highres');
             trackVideoProgress();
           }
           if (event.data === window.YT.PlayerState.ENDED) {
@@ -148,6 +150,12 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
             if (playerRef.current && playerRef.current.playVideo) {
               playerRef.current.playVideo();
             }
+          }
+        },
+        onPlaybackQualityChange: (event: any) => {
+          const quality = event.data;
+          if (quality !== 'highres' && quality !== 'hd1080' && quality !== 'hd720') {
+            event.target.setPlaybackQuality('highres');
           }
         }
       }
