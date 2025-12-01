@@ -167,19 +167,10 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
     progressIntervalRef.current = setInterval(() => {
       if (playerRef.current && playerRef.current.getCurrentTime && playerRef.current.getDuration) {
         const currentTime = playerRef.current.getCurrentTime();
-        const duration = playerRef.current.getDuration();
 
         if (videoConfig && currentTime >= videoConfig.button_delay_seconds && !buttonEnabled) {
           setButtonEnabled(true);
           onButtonEnable();
-        }
-        
-        const isNearEnd = duration > 0 && (duration - currentTime) < 3;
-        
-        if (isNearEnd) {
-          setShowOverlay(true);
-        } else if (currentTime >= 5) {
-          setShowOverlay(false);
         }
       }
     }, 300);
