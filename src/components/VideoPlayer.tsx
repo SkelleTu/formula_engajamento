@@ -212,21 +212,11 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
           ></div>
           
           <div 
-            className="absolute top-0 left-0 z-50 pointer-events-none transition-opacity duration-700"
+            className="absolute top-0 left-0 right-0 z-50 pointer-events-none transition-opacity duration-700"
             style={{
-              width: '60%',
-              height: '60px',
-              background: 'linear-gradient(to bottom, rgb(2, 2, 15) 0%, rgb(2, 2, 15) 50%, rgba(2, 2, 15, 0.5) 80%, transparent 100%), linear-gradient(to right, rgb(2, 2, 15) 0%, transparent 100%)',
-              opacity: showOverlay ? 1 : 0,
-            }}
-          ></div>
-          
-          <div 
-            className="absolute top-0 right-0 z-50 pointer-events-none transition-opacity duration-700"
-            style={{
-              width: '25%',
-              height: '60px',
-              background: 'linear-gradient(to bottom, rgb(2, 2, 15) 0%, rgb(2, 2, 15) 50%, rgba(2, 2, 15, 0.5) 80%, transparent 100%), linear-gradient(to left, rgb(2, 2, 15) 0%, transparent 100%)',
+              width: '100%',
+              height: '80px',
+              background: 'linear-gradient(to bottom, rgb(2, 2, 15) 0%, rgb(2, 2, 15) 60%, rgba(2, 2, 15, 0.7) 80%, transparent 100%)',
               opacity: showOverlay ? 1 : 0,
             }}
           ></div>
