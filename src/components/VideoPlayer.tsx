@@ -18,6 +18,7 @@ const DEFAULT_BUTTON_DELAY = 30;
 function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
   const [videoConfig, setVideoConfig] = useState<VideoConfig | null>(null);
   const [buttonEnabled, setButtonEnabled] = useState(false);
+  const [showOverlay, setShowOverlay] = useState(true);
   const videoContainerRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<any>(null);
   const progressIntervalRef = useRef<any>(null);
@@ -89,7 +90,7 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
       height: '100%',
       playerVars: {
         autoplay: 1,
-        mute: 0,
+        mute: 1,
         controls: 0,
         disablekb: 1,
         fs: 0,
@@ -122,13 +123,15 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
             trackVideoProgress();
           }
           if (event.data === window.YT.PlayerState.ENDED) {
-            if (playerRef.current) {
+            if (playerRef.current && playerRef.current.seekTo) {
               playerRef.current.seekTo(0);
               playerRef.current.playVideo();
             }
           }
           if (event.data === window.YT.PlayerState.PAUSED) {
-            event.target.playVideo();
+            if (playerRef.current && playerRef.current.playVideo) {
+              playerRef.current.playVideo();
+            }
           }
         }
       }
@@ -141,15 +144,25 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
     }
     
     progressIntervalRef.current = setInterval(() => {
-      if (playerRef.current && playerRef.current.getCurrentTime) {
+      if (playerRef.current && playerRef.current.getCurrentTime && playerRef.current.getDuration) {
         const currentTime = playerRef.current.getCurrentTime();
+        const duration = playerRef.current.getDuration();
 
         if (videoConfig && currentTime >= videoConfig.button_delay_seconds && !buttonEnabled) {
           setButtonEnabled(true);
           onButtonEnable();
         }
+        
+        const isNearStart = currentTime < 4;
+        const isNearEnd = duration > 0 && (duration - currentTime) < 3;
+        
+        if (isNearStart || isNearEnd) {
+          setShowOverlay(true);
+        } else {
+          setShowOverlay(false);
+        }
       }
-    }, 500);
+    }, 300);
   };
 
   useEffect(() => {
@@ -172,20 +185,49 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
     <div ref={videoContainerRef} className="relative">
       <div className="relative rounded-2xl overflow-hidden border-2 border-pink-500/30 shadow-2xl shadow-pink-500/20">
         <div className="aspect-video bg-black relative overflow-hidden">
-          <div id="video-player-container" className="absolute inset-0 w-full h-full">
+          <div 
+            id="video-player-container" 
+            className="absolute inset-0 w-full h-full"
+          >
             <div id="youtube-player" className="w-full h-full"></div>
           </div>
           
           <div 
-            className="absolute inset-0 z-40 cursor-default"
+            className="absolute inset-0 z-30 cursor-default"
             onMouseDown={(e) => e.preventDefault()}
             onClick={(e) => e.preventDefault()}
             onDoubleClick={(e) => e.preventDefault()}
             onContextMenu={(e) => e.preventDefault()}
           ></div>
           
-          <div className="absolute top-0 left-0 right-0 h-16 bg-black z-30 pointer-events-none"></div>
-          <div className="absolute bottom-0 left-0 right-0 h-14 bg-black z-30 pointer-events-none"></div>
+          <div 
+            className="absolute top-0 left-0 z-50 pointer-events-none transition-opacity duration-700"
+            style={{
+              width: '60%',
+              height: '60px',
+              background: 'linear-gradient(to bottom, rgb(2, 2, 15) 0%, rgb(2, 2, 15) 50%, rgba(2, 2, 15, 0.5) 80%, transparent 100%), linear-gradient(to right, rgb(2, 2, 15) 0%, transparent 100%)',
+              opacity: showOverlay ? 1 : 0,
+            }}
+          ></div>
+          
+          <div 
+            className="absolute top-0 right-0 z-50 pointer-events-none transition-opacity duration-700"
+            style={{
+              width: '25%',
+              height: '60px',
+              background: 'linear-gradient(to bottom, rgb(2, 2, 15) 0%, rgb(2, 2, 15) 50%, rgba(2, 2, 15, 0.5) 80%, transparent 100%), linear-gradient(to left, rgb(2, 2, 15) 0%, transparent 100%)',
+              opacity: showOverlay ? 1 : 0,
+            }}
+          ></div>
+          
+          <div 
+            className="absolute bottom-0 left-0 right-0 z-50 pointer-events-none transition-opacity duration-700"
+            style={{
+              height: '40px',
+              background: 'linear-gradient(to top, rgb(2, 2, 15) 0%, rgb(2, 2, 15) 30%, rgba(2, 2, 15, 0.5) 60%, transparent 100%)',
+              opacity: showOverlay ? 1 : 0,
+            }}
+          ></div>
         </div>
       </div>
     </div>
