@@ -12,10 +12,12 @@ interface VideoConfig {
   button_delay_seconds: number;
 }
 
+const DEFAULT_VIDEO_URL = 'https://youtu.be/WAUqBZuNmlA';
+const DEFAULT_BUTTON_DELAY = 30;
+
 function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
   const [videoConfig, setVideoConfig] = useState<VideoConfig | null>(null);
   const [buttonEnabled, setButtonEnabled] = useState(false);
-  const [videoEnded, setVideoEnded] = useState(false);
   const videoContainerRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<any>(null);
   const progressIntervalRef = useRef<any>(null);
@@ -25,7 +27,7 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
   }, []);
 
   useEffect(() => {
-    if (videoConfig && videoConfig.video_type === 'youtube') {
+    if (videoConfig) {
       const videoId = getYouTubeVideoId(videoConfig.video_url);
       if (videoId) {
         loadYouTubePlayer(videoId);
@@ -40,9 +42,22 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
       
       if (data.video) {
         setVideoConfig(data.video);
+      } else {
+        setVideoConfig({
+          id: 0,
+          video_url: DEFAULT_VIDEO_URL,
+          video_type: 'youtube',
+          button_delay_seconds: DEFAULT_BUTTON_DELAY
+        });
       }
     } catch (error) {
       console.error('Erro ao carregar configuração de vídeo:', error);
+      setVideoConfig({
+        id: 0,
+        video_url: DEFAULT_VIDEO_URL,
+        video_type: 'youtube',
+        button_delay_seconds: DEFAULT_BUTTON_DELAY
+      });
     }
   };
 
@@ -51,7 +66,6 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
     const match = url.match(regExp);
     return (match && match[7].length === 11) ? match[7] : null;
   };
-
 
   const loadYouTubePlayer = (videoId: string) => {
     if (!window.YT) {
@@ -90,14 +104,14 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
         widget_referrer: window.location.origin,
         autohide: 1,
         color: 'white',
-        loop: 0,
+        loop: 1,
+        playlist: videoId,
       },
       events: {
         onReady: (event: any) => {
           event.target.playVideo();
           event.target.setPlaybackQuality('hd1080');
           
-          // Esconde completamente os controles do YouTube com CSS
           const iframe = document.querySelector('#youtube-player iframe') as HTMLIFrameElement;
           if (iframe) {
             iframe.style.pointerEvents = 'none';
@@ -105,18 +119,15 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
         },
         onStateChange: (event: any) => {
           if (event.data === window.YT.PlayerState.PLAYING) {
-            setVideoEnded(false);
             trackVideoProgress();
           }
-          // Detecta quando o vídeo terminou
           if (event.data === window.YT.PlayerState.ENDED) {
-            setVideoEnded(true);
-            if (progressIntervalRef.current) {
-              clearInterval(progressIntervalRef.current);
+            if (playerRef.current) {
+              playerRef.current.seekTo(0);
+              playerRef.current.playVideo();
             }
           }
-          // Impede que o vídeo pause (mas não quando terminou)
-          if (event.data === window.YT.PlayerState.PAUSED && event.data !== window.YT.PlayerState.ENDED) {
+          if (event.data === window.YT.PlayerState.PAUSED) {
             event.target.playVideo();
           }
         }
@@ -152,7 +163,7 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
   if (!videoConfig) {
     return (
       <div className="aspect-video bg-gradient-to-br from-gray-900 to-purple-900 flex items-center justify-center rounded-2xl">
-        <p className="text-purple-300">Nenhum vídeo configurado</p>
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-pink-500"></div>
       </div>
     );
   }
@@ -160,40 +171,21 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
   return (
     <div ref={videoContainerRef} className="relative">
       <div className="relative rounded-2xl overflow-hidden border-2 border-pink-500/30 shadow-2xl shadow-pink-500/20">
-        <div className="aspect-video bg-gradient-to-br from-gray-900 to-purple-900 relative">
+        <div className="aspect-video bg-black relative overflow-hidden">
           <div id="video-player-container" className="absolute inset-0 w-full h-full">
-            {videoConfig.video_type === 'youtube' && (
-              <div id="youtube-player" className="w-full h-full"></div>
-            )}
+            <div id="youtube-player" className="w-full h-full"></div>
           </div>
           
-          {/* Overlay transparente para bloquear todas as interações */}
           <div 
-            className="absolute inset-0 z-40 cursor-default bg-transparent"
+            className="absolute inset-0 z-40 cursor-default"
             onMouseDown={(e) => e.preventDefault()}
             onClick={(e) => e.preventDefault()}
             onDoubleClick={(e) => e.preventDefault()}
             onContextMenu={(e) => e.preventDefault()}
           ></div>
           
-          {/* Overlay quando o vídeo termina - customizado do funil */}
-          {videoEnded && (
-            <div className="absolute inset-0 z-50 bg-black/90 flex items-center justify-center">
-              <button 
-                onClick={() => {
-                  if (playerRef.current) {
-                    playerRef.current.seekTo(0);
-                    playerRef.current.playVideo();
-                    setVideoEnded(false);
-                  }
-                }}
-                className="px-8 py-4 bg-gradient-to-r from-pink-500 to-purple-500 text-white font-bold rounded-full shadow-2xl hover:scale-105 transition-transform duration-300"
-              >
-                ▶ Assistir Novamente
-              </button>
-            </div>
-          )}
-          
+          <div className="absolute top-0 left-0 right-0 h-16 bg-black z-30 pointer-events-none"></div>
+          <div className="absolute bottom-0 left-0 right-0 h-14 bg-black z-30 pointer-events-none"></div>
         </div>
       </div>
     </div>
