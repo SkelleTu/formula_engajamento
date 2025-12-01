@@ -23,9 +23,20 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
   const playerRef = useRef<any>(null);
   const progressIntervalRef = useRef<any>(null);
   const trackingStartedRef = useRef<boolean>(false);
+  const overlayTimeoutRef = useRef<any>(null);
 
   useEffect(() => {
     loadVideoConfig();
+    
+    overlayTimeoutRef.current = setTimeout(() => {
+      setShowOverlay(false);
+    }, 5000);
+    
+    return () => {
+      if (overlayTimeoutRef.current) {
+        clearTimeout(overlayTimeoutRef.current);
+      }
+    };
   }, []);
 
   useEffect(() => {
@@ -163,12 +174,11 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
           onButtonEnable();
         }
         
-        const isNearStart = currentTime < 4;
         const isNearEnd = duration > 0 && (duration - currentTime) < 3;
         
-        if (isNearStart || isNearEnd) {
+        if (isNearEnd) {
           setShowOverlay(true);
-        } else {
+        } else if (currentTime >= 5) {
           setShowOverlay(false);
         }
       }
