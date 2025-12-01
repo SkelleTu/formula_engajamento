@@ -22,6 +22,7 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
   const videoContainerRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<any>(null);
   const progressIntervalRef = useRef<any>(null);
+  const trackingStartedRef = useRef<boolean>(false);
 
   useEffect(() => {
     loadVideoConfig();
@@ -117,6 +118,10 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
           if (iframe) {
             iframe.style.pointerEvents = 'none';
           }
+          
+          setTimeout(() => {
+            trackVideoProgress();
+          }, 500);
         },
         onStateChange: (event: any) => {
           if (event.data === window.YT.PlayerState.PLAYING) {
@@ -139,6 +144,11 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
   };
 
   const trackVideoProgress = () => {
+    if (trackingStartedRef.current) {
+      return;
+    }
+    trackingStartedRef.current = true;
+    
     if (progressIntervalRef.current) {
       clearInterval(progressIntervalRef.current);
     }
